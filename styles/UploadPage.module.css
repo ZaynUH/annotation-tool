@@ -1,111 +1,94 @@
-/* === Page container === */
+/* Page layout */
 .page {
-  background-color: #e5e7eb; /* Tailwind gray-200 */
   min-height: 100vh;
+  padding: 1rem;
+  background-color: #f0f0f0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 2rem;
 }
 
-/* === Card box === */
+/* Main card container */
 .card {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
   width: 100%;
-  max-width: 960px;
-  padding: 0;
+  max-width: 1024px;
+  background-color: #f8f8f8;
+  border: 1px solid #d1d1d1;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* === Title === */
+/* Title styling */
 .title {
-  padding: 1rem;
   font-size: 1.25rem;
   font-weight: 500;
-  border-bottom: 1px solid #d1d5db;
+  padding: 1rem;
+  border-bottom: 1px solid #d1d1d1;
+  margin: 0;
 }
 
-/* === Toolbar === */
+/* Toolbar/tabs styling */
 .toolbar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid #d1d5db;
+  border-bottom: 1px solid #d1d1d1;
 }
 
 .tab {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   text-align: center;
-  background-color: transparent;
-  border: none;
-  font: inherit;
-  cursor: pointer;
-  color: #6b7280;
-  border-bottom: 2px solid transparent;
+  text-decoration: none;
+  color: #333;
+  transition: background-color 0.2s;
 }
 
 .tab:hover {
-  background-color: #f3f4f6;
+  background-color: #f0f0f0;
 }
 
-.activeTab {
-  background-color: #e5e7eb;
-  border-bottom: 2px solid #111827;
-  color: #111827;
+.tab.active {
+  background-color: #e0e0e0;
+  font-weight: 500;
 }
 
-.tabDisabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* === ImageGrid layout === */
-.imageGrid {
-  padding: 1rem;
+/* Image grid styling */
+.grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+  padding: 1rem;
 }
 
-.imageSlots {
-  grid-column: span 3;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.imageBox {
-  background-color: #f9fafb;
-  border: 1px solid #d1d5db;
-  aspect-ratio: 1 / 1;
+.gridItem {
+  aspect-ratio: 1;
+  border: 1px solid #d1d1d1;
+  background-color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  cursor: pointer;
   overflow: hidden;
 }
 
-.imageBox img {
+.gridImage {
   max-width: 100%;
   max-height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-.uploadBox {
-  background-color: #fff;
-  border: 2px dashed #d1d5db;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  font-size: 2rem;
-  border-radius: 4px;
-  cursor: pointer;
+/* Upload button styling */
+.upload {
   position: relative;
+  cursor: pointer;
 }
 
-.uploadInput {
+.plus {
+  font-size: 2rem;
+  color: #a0a0a0;
+}
+
+.fileInput {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -113,20 +96,20 @@
   cursor: pointer;
 }
 
-/* === Bottom preview area === */
+/* Preview area styling */
 .preview {
-  border-top: 1px solid #d1d5db;
+  margin: 1rem;
   height: 10rem;
+  border: 1px solid #d1d1d1;
+  background-color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
-  color: #6b7280;
-  font-size: 1rem;
+  color: #777;
 }
 
 .selectedImage {
-  max-height: 100%;
   max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }

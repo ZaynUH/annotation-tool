@@ -1,95 +1,106 @@
 .page {
-    background-color: #e5e7eb;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
-  }
-  
-  .card {
-    background-color: white;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 1200px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .title {
-    padding: 1rem;
-    font-size: 1.25rem;
-    font-weight: 500;
-    border-bottom: 1px solid #d1d5db;
-  }
-  
-  /* Tools Panel */
-  .toolsWrapper {
-    border-bottom: 1px solid #d1d5db;
-    padding: 0.5rem 1rem;
-  }
-  
-  .tools {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .toolButtons {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .toolBtn {
-    width: 24px;
-    height: 24px;
-    background-color: #d1d5db;
-    border: none;
-    border-radius: 4px;
-  }
-  
-  /* Image viewer section */
-  .workspace {
-    display: flex;
-    padding: 1rem;
-  }
-  
-  .images {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .imageBox {
-    flex: 1;
-    height: 300px;
-    background-color: #f9fafb;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-  }
-  
-  .navArrow {
-    background-color: #f3f4f6;
-    border: 1px solid #d1d5db;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border-radius: 4px;
-    height: 40px;
-  }
-  
-  .imageNav {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.875rem;
-  }
-  
-  /* Layers Panel */
-  .layers {
-    width: 200px;
-    border-left: 1px solid #d1d5db;
-    padding: 1rem;
-    background-color: #f9fafb;
-  }
-  
+  background-color: #e5e7eb;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.card {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  padding: 1rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.workspace {
+  display: flex;
+  padding: 1rem;
+}
+
+/* Tools Panel */
+.toolsWrapper {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.tools {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolButton {
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Image Navigator */
+.imageNavigator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-right: 1rem;
+}
+
+.thumbnail {
+  width: 150px;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mainImage {
+  width: 300px;
+  height: 400px;
+  background-color: #f9fafb;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrowButton {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+/* Layers Panel */
+.layers {
+  width: 250px;
+  background-color: #f9fafb;
+  border-left: 1px solid #d1d5db;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.layerItem {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}

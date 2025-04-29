@@ -13,36 +13,49 @@ interface ImagePanelsProps {
 
 export default function ImagePanel({ images, currentIndex, onPrev, onNext }: ImagePanelsProps) {
   const imageUrl = images[currentIndex];
-  const showLeft = currentIndex > 0;
-  const showRight = currentIndex < images.length - 1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < images.length - 1;
 
   return (
     <div className={styles.imageNavigator}>
-      {showLeft && (
-        <>
-          <button className={styles.arrowButton} onClick={onPrev}>
-            &lt;
-          </button>
-          <div className={styles.thumbnail}>
-            <img src={images[currentIndex - 1]} alt="Previous" />
-          </div>
-        </>
-      )}
+      
+      <div className={styles.sidePanel}>
+        {hasPrev ? (
+          <>
+            <button className={styles.arrowButton} onClick={onPrev}>&lt;</button>
+            <div className={styles.thumbnail}>
+              <img src={images[currentIndex - 1]} alt="Previous" />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={styles.arrowSpacer} />
+            <div className={styles.thumbnail} />
+          </>
+        )}
+      </div>
 
+      
       <div className={styles.mainImage}>
         {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={300} height={400} />}
       </div>
 
-      {showRight && (
-        <>
-          <div className={styles.thumbnail}>
-            <img src={images[currentIndex + 1]} alt="Next" />
-          </div>
-          <button className={styles.arrowButton} onClick={onNext}>
-            &gt;
-          </button>
-        </>
-      )}
+      
+      <div className={styles.sidePanel}>
+        {hasNext ? (
+          <>
+            <div className={styles.thumbnail}>
+              <img src={images[currentIndex + 1]} alt="Next" />
+            </div>
+            <button className={styles.arrowButton} onClick={onNext}>&gt;</button>
+          </>
+        ) : (
+          <>
+            <div className={styles.thumbnail} />
+            <div className={styles.arrowSpacer} />
+          </>
+        )}
+      </div>
     </div>
   );
 }

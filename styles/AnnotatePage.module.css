@@ -28,6 +28,7 @@
 .workspace {
   display: flex;
   padding: 1rem;
+  height: 90%;
 }
 
 

@@ -1,3 +1,4 @@
+/* Page layout */
 .page {
   background-color: #e5e7eb;
   min-height: 100vh;
@@ -21,7 +22,7 @@
   font-size: 1.25rem;
   font-weight: 500;
   border-bottom: 1px solid #d1d5db;
-  color : black;
+  color: black;
 }
 
 .workspace {
@@ -37,17 +38,21 @@
 
 .tools {
   display: flex;
-  justify-content: start;
-  align-items: center;
   gap: 0.5rem;
 }
 
 .toolButton {
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   background-color: #f3f4f6;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.activeTool {
+  background-color: #dbeafe;
+  border-color: #3b82f6;
+  font-weight: 600;
 }
 
 /* Image Navigator */
@@ -104,30 +109,4 @@
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-}
-.imageBoxSmall {
-  flex: 1;
-  height: 200px;
-  background-color: #f9fafb;
-  border: 1px solid #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.imageBoxLarge {
-  flex: 2;
-  height: 300px;
-  background-color: #f9fafb;
-  border: 2px solid #9ca3af;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.imageBoxSmall img,
-.imageBoxLarge img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }

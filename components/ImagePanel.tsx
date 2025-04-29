@@ -1,3 +1,4 @@
+import CanvasAnnotator from './CanvasAnnotator';
 import styles from '../styles/AnnotatePage.module.css';
 
 interface ImagePanelsProps {
@@ -5,33 +6,31 @@ interface ImagePanelsProps {
   currentIndex: number;
   onPrev: () => void;
   onNext: () => void;
-  selectedTool: 'pen' | 'shape' | 'color';
+  selectedTool: string;
 }
 
-export default function ImagePanels({ images, currentIndex, onPrev, onNext }: ImagePanelsProps) {
+export default function ImagePanel({ images, currentIndex, onPrev, onNext }: ImagePanelsProps) {
+  const imageUrl = images[currentIndex];
+
   return (
     <div className={styles.imageNavigator}>
       <button className={styles.arrowButton} onClick={onPrev} disabled={currentIndex === 0}>
         &lt;
       </button>
 
-      {/* Left Thumbnail */}
       {images[currentIndex - 1] && (
         <div className={styles.thumbnail}>
-          <img src={images[currentIndex - 1]} alt="Previous" className="max-w-full max-h-full object-contain" />
+          <img src={images[currentIndex - 1]} alt="Previous" />
         </div>
       )}
 
-      {/* Main Focus Image */}
       <div className={styles.mainImage}>
-        {/* Later we'll render canvas here */}
-        <img src={images[currentIndex]} alt="Main" className="max-w-full max-h-full object-contain" />
+        {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={300} height={400} />}
       </div>
 
-      {/* Right Thumbnail */}
       {images[currentIndex + 1] && (
         <div className={styles.thumbnail}>
-          <img src={images[currentIndex + 1]} alt="Next" className="max-w-full max-h-full object-contain" />
+          <img src={images[currentIndex + 1]} alt="Next" />
         </div>
       )}
 

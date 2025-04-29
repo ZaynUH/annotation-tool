@@ -72,6 +72,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  width: 150px; /* match thumbnail width */
 }
 
 .thumbnail {
@@ -106,13 +107,13 @@
   border-radius: 4px;
   padding: 0.5rem;
   cursor: pointer;
-  height: fit-content;
+  height: 36px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.arrowSpacer {
-  height: 36px;
-  visibility: hidden;
-}
 
 
 /* ===== LAYERS PANEL ===== */

@@ -1,5 +1,7 @@
-import CanvasAnnotator from './CanvasAnnotator';
+import dynamic from 'next/dynamic';
 import styles from '../styles/AnnotatePage.module.css';
+
+const CanvasAnnotator = dynamic(() => import('./CanvasAnnotator'), { ssr: false });
 
 interface ImagePanelsProps {
   images: string[];

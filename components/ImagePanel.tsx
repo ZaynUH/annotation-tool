@@ -17,40 +17,36 @@ export default function ImagePanel({ images, currentIndex, onPrev, onNext }: Ima
   const hasNext = currentIndex < images.length - 1;
 
   return (
-    <div className={styles.imageNavigator}>
-      {/* LEFT SIDE */}
-      <div className={styles.sidePanel}>
-        <button
-          className={styles.arrowButton}
-          onClick={onPrev}
-          disabled={!hasPrev}
-          style={{ visibility: hasPrev ? 'visible' : 'hidden' }}
-        >
+    <div className={styles.imagePanelContainer}>
+      {/* Image count and arrows above */}
+      <div className={styles.imageControls}>
+        <button onClick={onPrev} disabled={!hasPrev} className={styles.controlArrow}>
           &lt;
         </button>
-        <div className={styles.thumbnail}>
-          {hasPrev && <img src={images[currentIndex - 1]} alt="Previous" />}
-        </div>
-      </div>
-
-      {/* MAIN IMAGE */}
-      <div className={styles.mainImage}>
-        {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={300} height={400} />}
-      </div>
-
-      {/* RIGHT SIDE */}
-      <div className={styles.sidePanel}>
-        <div className={styles.thumbnail}>
-          {hasNext && <img src={images[currentIndex + 1]} alt="Next" />}
-        </div>
-        <button
-          className={styles.arrowButton}
-          onClick={onNext}
-          disabled={!hasNext}
-          style={{ visibility: hasNext ? 'visible' : 'hidden' }}
-        >
+        <span className={styles.imageCount}>
+          {currentIndex + 1} / {images.length}
+        </span>
+        <button onClick={onNext} disabled={!hasNext} className={styles.controlArrow}>
           &gt;
         </button>
+      </div>
+
+      {/* Image layout row */}
+      <div className={styles.imageRow}>
+        {/* Left thumbnail (only if previous image exists) */}
+        <div className={styles.imageBoxSmall}>
+          {hasPrev ? <img src={images[currentIndex - 1]} alt="Previous" /> : null}
+        </div>
+
+        {/* Main image */}
+        <div className={styles.imageBoxLarge}>
+          {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={300} height={400} />}
+        </div>
+
+        {/* Right thumbnail (only if next image exists) */}
+        <div className={styles.imageBoxSmall}>
+          {hasNext ? <img src={images[currentIndex + 1]} alt="Next" /> : null}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-/* Page layout */
+/* ===== PAGE LAYOUT ===== */
 .page {
   background-color: #e5e7eb;
   min-height: 100vh;
@@ -30,7 +30,8 @@
   padding: 1rem;
 }
 
-/* Tools Panel */
+
+/* ===== TOOLBAR ===== */
 .toolsWrapper {
   padding: 0.5rem 1rem;
   border-bottom: 1px solid #d1d5db;
@@ -55,13 +56,15 @@
   font-weight: 600;
 }
 
-/* Image Navigator */
+
+/* ===== IMAGE PANEL ===== */
 .imageNavigator {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-right: 1rem;
+  justify-content: center;
 }
 
 .thumbnail {
@@ -90,9 +93,11 @@
   border-radius: 4px;
   padding: 0.5rem;
   cursor: pointer;
+  height: fit-content;
 }
 
-/* Layers Panel */
+
+/* ===== LAYERS PANEL ===== */
 .layers {
   width: 250px;
   background-color: #f9fafb;

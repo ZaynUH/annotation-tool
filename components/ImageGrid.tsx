@@ -4,10 +4,9 @@ interface Props {
   images: string[];
   onUpload: (urls: string[]) => void;
   onSelect: (url: string) => void;
-  onDelete: (index: number) => void;
 }
 
-const ImageGrid = ({ images, onUpload, onSelect, onDelete }: Props) => {
+export default function ImageGrid({ images, onUpload, onSelect }: Props) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
@@ -17,18 +16,13 @@ const ImageGrid = ({ images, onUpload, onSelect, onDelete }: Props) => {
 
   return (
     <div className={styles.grid}>
-      {images.map((src, idx) => (
-        <div key={idx} className={styles.gridItem} onClick={() => onSelect(src)}>
+      {images.slice(0, 4).map((src, idx) => (
+        <div
+          key={idx}
+          className={styles.gridItem}
+          onClick={() => onSelect(src)}
+        >
           <img src={src} alt={`img-${idx}`} className={styles.gridImage} />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(idx);
-            }}
-            className={styles.deleteBtn}
-          >
-            ×
-          </button>
         </div>
       ))}
       <label className={`${styles.gridItem} ${styles.upload}`}>
@@ -43,6 +37,4 @@ const ImageGrid = ({ images, onUpload, onSelect, onDelete }: Props) => {
       </label>
     </div>
   );
-};
-
-export default ImageGrid;
+}

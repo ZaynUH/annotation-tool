@@ -1,4 +1,4 @@
-/* Page layout */
+/* === Layout === */
 .page {
   min-height: 100vh;
   padding: 1rem;
@@ -8,10 +8,9 @@
   align-items: flex-start;
 }
 
-/* Main card container */
 .card {
   width: 100%;
-  max-width: 1024px;
+  max-width: 1280px;
   background-color: #f8f8f8;
   border: 1px solid #d1d1d1;
   border-radius: 0.375rem;
@@ -19,7 +18,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Title styling */
+/* === Title === */
 .title {
   font-size: 1.25rem;
   font-weight: 500;
@@ -28,31 +27,27 @@
   margin: 0;
 }
 
-/* Toolbar/tabs styling */
+/* === Toolbar Section (highlighted box tabs) === */
 .toolbar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid #d1d1d1;
+  border: 1px solid #d1d1d1;
+  margin: 0 1rem;
 }
 
 .tab {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem;
   text-align: center;
-  text-decoration: none;
-  color: #333;
-  transition: background-color 0.2s;
-}
-
-.tab:hover {
-  background-color: #f0f0f0;
-}
-
-.tab.active {
+  border-right: 1px solid #d1d1d1;
   background-color: #e0e0e0;
   font-weight: 500;
 }
 
-/* Input field for deck name */
+.tab:last-child {
+  border-right: none;
+}
+
+/* === Deck Input Section === */
 .deckInput {
   margin: 1rem;
   padding: 0.5rem;
@@ -61,16 +56,17 @@
   border-radius: 4px;
 }
 
-/* Image grid styling */
+/* === Image Grid Upload === */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   padding: 1rem;
+  padding-bottom: 0;
 }
 
 .gridItem {
-  aspect-ratio: 1;
+  aspect-ratio: 2/3;
   border: 1px solid #d1d1d1;
   background-color: white;
   display: flex;
@@ -86,7 +82,6 @@
   object-fit: contain;
 }
 
-/* Upload button styling */
 .upload {
   position: relative;
   cursor: pointer;
@@ -105,7 +100,7 @@
   cursor: pointer;
 }
 
-/* Preview area styling */
+/* === Preview Panel === */
 .preview {
   margin: 1rem;
   height: 10rem;
@@ -123,7 +118,7 @@
   object-fit: contain;
 }
 
-/* Save button for decks */
+/* === Save Button === */
 .saveButton {
   margin: 1rem;
   padding: 0.5rem 1rem;
@@ -138,40 +133,65 @@
   background-color: #2563eb;
 }
 
-/* Deck list heading */
+/* === Your Decks Section === */
 .subtitle {
   margin: 1rem;
   font-weight: 500;
   font-size: 1.1rem;
 }
 
-/* Deck container grid */
 .decksGrid {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem;
+  padding-top: 0;
 }
 
-/* Single deck block */
+/* Each deck container */
 .deck {
-  border: 1px solid #d1d5d5;
-  padding: 1rem;
-  border-radius: 6px;
-  background: #f9fafb;
   flex: 1;
-  min-width: 250px;
+  min-width: 300px;
+  max-width: 49%;
+  background: #f9fafb;
+  border: 1px solid #d1d5d5;
+  border-radius: 4px;
+  padding: 1rem;
+  position: relative;
 }
 
-/* Deck heading */
 .deckTitle {
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
-/* Thumbnails inside each deck */
+/* Scrollable image strip inside each deck */
 .deckImages {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* Scroll buttons (placeholder, can hook up later) */
+.scrollButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #e5e7eb;
+  border: 1px solid #d1d5d5;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.scrollButton:hover {
+  background-color: #d1d5db;
+}
+
+.scrollButton.right {
+  right: 0.5rem;
+}
+
+.scrollButton.left {
+  left: 0.5rem;
 }

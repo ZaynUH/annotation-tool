@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode, Dispatch, SetStateActio
 
 export type Layer = {
   id: number;
-  type: 'pen' | 'arrow' | 'text' | 'shape';
+  type: 'pen' | 'arrow' | 'text' | 'shape' | 'line';
   colour: string;
   points: number[];
   name?: string;

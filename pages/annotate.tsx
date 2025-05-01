@@ -25,6 +25,9 @@ export default function AnnotatePage() {
       if (parsed.images?.length) {
         setImages(parsed.images);
         setCurrentIndex(0);
+        if (parsed.annotations) {
+          setLayers(parsed.annotations);
+        }
       }
     }
   }, []);
@@ -40,10 +43,23 @@ export default function AnnotatePage() {
   const currentLayers = layers[currentIndex] || [];
 
   const updateLayers = (updated: any[]) => {
-    setLayers(prev => ({
-      ...prev,
+    const newLayers = {
+      ...layers,
       [currentIndex]: updated,
-    }));
+    };
+
+    setLayers(newLayers);
+
+    // Persist to currentDeck in localStorage
+    const currentDeck = localStorage.getItem('currentDeck');
+    if (currentDeck) {
+      const parsed = JSON.parse(currentDeck);
+      const updatedDeck = {
+        ...parsed,
+        annotations: newLayers,
+      };
+      localStorage.setItem('currentDeck', JSON.stringify(updatedDeck));
+    }
   };
 
   return (
@@ -51,7 +67,7 @@ export default function AnnotatePage() {
       <div className={styles.card}>
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <div className={styles.toolbarStrip}>
-          <Toolbar/>
+          <Toolbar />
         </div>
         <ToolsPanel selectedTool={activeTool} setSelectedTool={setActiveTool} />
         <div className={styles.workspace}>
@@ -62,7 +78,7 @@ export default function AnnotatePage() {
             onNext={handleNext}
             selectedTool={activeTool}
           />
-          <LayersPanel/>
+          <LayersPanel />
         </div>
       </div>
     </div>

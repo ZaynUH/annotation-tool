@@ -16,7 +16,10 @@ export default function AnnotatePage() {
     setLayers,
     activeTool,
     setActiveTool,
+    activeColour,
+    setActiveColour
   } = useAnnotation();
+  
 
   useEffect(() => {
     const currentDeck = localStorage.getItem('currentDeck');
@@ -61,7 +64,12 @@ export default function AnnotatePage() {
         <div className={styles.toolbarStrip}>
           <Toolbar />
         </div>
-        <ToolsPanel selectedTool={activeTool} setSelectedTool={setActiveTool} />
+        <ToolsPanel
+         selectedTool={activeTool}
+        setSelectedTool={setActiveTool}
+        activeColour={activeColour}
+         setActiveColour={setActiveColour}
+        />
         <div className={styles.workspace}>
           <ImagePanel
             images={images}

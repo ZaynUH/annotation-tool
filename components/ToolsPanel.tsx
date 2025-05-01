@@ -1,57 +1,35 @@
-import { useState } from 'react';
 import styles from '../styles/AnnotatePage.module.css';
 
 interface ToolsPanelProps {
   selectedTool: string;
   setSelectedTool: (tool: string) => void;
+  activeColour: string;
+  setActiveColour: (colour: string) => void;
 }
 
-export default function ToolsPanel({ selectedTool, setSelectedTool }: ToolsPanelProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
-
+export default function ToolsPanel({
+  selectedTool,
+  setSelectedTool,
+  activeColour,
+  setActiveColour
+}: ToolsPanelProps) {
   return (
     <div className={styles.toolsWrapper}>
       <div className={styles.tools}>
-        <button
-          className={`${styles.toolButton} ${selectedTool === 'pen' ? styles.activeTool : ''}`}
-          onClick={() => setSelectedTool('pen')}
-        >
-          🖊️ Pen
-        </button>
-
-        <div className={styles.dropdown}>
+        {['pen', 'line', 'arrow', 'rectangle', 'circle'].map(tool => (
           <button
-            className={`${styles.toolButton} ${
-              ['arrow', 'line', 'circle', 'rectangle'].includes(selectedTool) ? styles.activeTool : ''
-            }`}
-            onClick={toggleDropdown}
+            key={tool}
+            className={`${styles.toolButton} ${selectedTool === tool ? styles.activeTool : ''}`}
+            onClick={() => setSelectedTool(tool)}
           >
-            📐 Shapes ▾
+            {tool}
           </button>
-          {dropdownOpen && (
-            <div className={styles.dropdownMenu}>
-              {['arrow', 'line', 'circle', 'rectangle'].map((tool) => (
-                <div
-                  key={tool}
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    setSelectedTool(tool);
-                    setDropdownOpen(false);
-                  }}
-                >
-                  {tool}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+        ))}
         <input
           type="color"
+          value={activeColour}
+          onChange={(e) => setActiveColour(e.target.value)}
           className={styles.colorPicker}
-          onChange={(e) => setSelectedTool(e.target.value)}
         />
       </div>
     </div>

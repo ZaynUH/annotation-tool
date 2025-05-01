@@ -66,15 +66,16 @@
   background-color: #d1d5db;
 }
 
-/* === Import section === */
+/* === Sections (Import & Decks) === */
 .importSection {
   margin: 1rem;
   padding: 1rem;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
-  background-color: #fff;
+  background-color: #e5e5e5;
 }
 
+/* === Input fields === */
 .deckInput {
   width: 100%;
   padding: 0.5rem;
@@ -82,8 +83,10 @@
   border-radius: 4px;
   font-size: 1rem;
   outline: none;
+  background-color: #e5e5e5;
 }
 
+/* === Grid layout === */
 .gridContainer {
   display: flex;
   align-items: center;
@@ -101,7 +104,7 @@
   width: 100%;
   aspect-ratio: 2/3;
   border: 1px solid #d1d1d1;
-  background-color: #fff;
+  background-color: #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,7 +139,7 @@
   width: 2.5rem;
   aspect-ratio: 2/3;
   border: 1px solid #d1d1d1;
-  background-color: #fff;
+  background-color: #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,7 +173,7 @@
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   padding: 0.25rem;
-  background-color: #f0f0f0;
+  background-color: #e5e5e5;
   text-align: left;
 }
 
@@ -179,13 +182,16 @@
   gap: 0.5rem;
   margin-top: 0.25rem;
   overflow: hidden;
+  padding: 0.5rem;
+  border: 1px solid #d1d1d1;
+  background-color: #e5e5e5;
 }
 
 .deckImg {
   width: 60px;
   aspect-ratio: 2/3;
   border: 1px solid #d1d1d1;
-  background: white;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;

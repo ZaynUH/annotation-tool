@@ -44,7 +44,7 @@
 /* === Tabs === */
 .toolbar {
   display: flex;
-  border: 1px solid #ebebeb;
+  border: 1px solid #d1d1d1;
   margin: 0 1rem;
   border-radius: 4px;
   overflow: hidden;
@@ -68,7 +68,7 @@
 }
 
 .tab.active {
-  background-color: #d4d4d4;
+  background-color: #e2e2e2;
 }
 
 /* === Section panels === */

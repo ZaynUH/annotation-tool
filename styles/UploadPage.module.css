@@ -1,16 +1,17 @@
 .page {
   min-height: 100vh;
   padding: 1rem;
-  background-color: #f0f0f0;
+  background-color: #f0f0f0; /* page background */
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  overflow: hidden;
 }
 
 .card {
   width: 100%;
   max-width: 1280px;
-  background-color: #f8f8f8;
+  background-color: #f8f8f8; /* card background */
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   display: flex;
@@ -18,6 +19,7 @@
   overflow: hidden;
 }
 
+/* === Header === */
 .header {
   display: flex;
   justify-content: space-between;
@@ -39,21 +41,25 @@
   border-radius: 50%;
 }
 
-/* === Toolbar tabs === */
+/* === Tabs === */
 .toolbar {
   display: flex;
-  border-bottom: 1px solid #d1d1d1;
+  border: 1px solid #d1d1d1;
+  margin: 0 1rem;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #e0e0e0;
 }
 
 .tab {
   flex: 1;
   text-align: center;
-  padding: 0.75rem;
-  background-color: #e0e0e0;
+  padding: 0.5rem;
   font-weight: 500;
   text-decoration: none;
   color: black;
   cursor: pointer;
+  background-color: #e0e0e0;
   border-right: 1px solid #d1d1d1;
 }
 
@@ -61,36 +67,37 @@
   border-right: none;
 }
 
-.tab.active,
-.tab.active:hover {
-  background-color: #d1d5db;
+.tab.active {
+  background-color: #fff;
 }
 
-/* === Sections (Import & Decks) === */
+/* === Section panels === */
 .importSection {
   margin: 1rem;
-  padding: 1rem;
+  background-color: #e5e5e5; /* panel bg */
   border: 1px solid #d1d1d1;
   border-radius: 6px;
-  background-color: #e5e5e5;
+  padding: 1rem;
 }
 
-/* === Input fields === */
+/* === Input (deck name & titles) === */
 .deckInput {
+  display: block;
   width: 100%;
   padding: 0.5rem;
+  font-size: 1rem;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
-  font-size: 1rem;
-  outline: none;
-  background-color: #e5e5e5;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
 }
 
-/* === Grid layout === */
+/* === Image grid + next arrow === */
 .gridContainer {
+  position: relative;
   display: flex;
   align-items: center;
-  margin-top: 1rem;
 }
 
 .grid {
@@ -103,11 +110,12 @@
 .gridItem {
   width: 100%;
   aspect-ratio: 2/3;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
-  background-color: #e5e5e5;
+  border-radius: 4px;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   cursor: pointer;
 }
 
@@ -117,6 +125,7 @@
   object-fit: contain;
 }
 
+/* upload cell */
 .upload {
   position: relative;
 }
@@ -128,26 +137,27 @@
 
 .fileInput {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   opacity: 0;
   cursor: pointer;
 }
 
+/* next “>” button */
 .nextButton {
   margin-left: 0.5rem;
   width: 2.5rem;
   aspect-ratio: 2/3;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
-  background-color: #e5e5e5;
+  border-radius: 4px;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
   cursor: pointer;
 }
 
-/* === Decks Display === */
+/* === Decks listing === */
 .decksGrid {
   display: flex;
   gap: 1rem;
@@ -157,42 +167,52 @@
 
 .deck {
   flex: 1;
+  background-color: #e5e5e5; /* panel bg */
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid #d1d1d1;
-  padding: 1rem;
-  border-radius: 6px;
-  background-color: #fff;
   position: relative;
 }
 
 .deckTitle {
-  font-weight: 500;
-  font-size: 1rem;
+  width: fit-content;
+  padding: 0.25rem 0.5rem;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
-  padding: 0.25rem;
-  background-color: #e5e5e5;
-  text-align: left;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .deckRow {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.25rem;
-  overflow: hidden;
-  padding: 0.5rem;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
-  background-color: #e5e5e5;
+  border-radius: 4px;
+  padding: 0.5rem;
+  overflow-x: auto;
+  cursor: pointer;
 }
 
 .deckImg {
   width: 60px;
   aspect-ratio: 2/3;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
-  background: #fff;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* reuse nextButton for deck arrows */
+.deck > .nextButton {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
 }

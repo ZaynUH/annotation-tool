@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Toolbar from '../components/Toolbar';
 import ToolsPanel from '../components/ToolsPanel';
 import ImagePanel from '../components/ImagePanel';
@@ -19,8 +19,11 @@ export default function AnnotatePage() {
     activeColour,
     setActiveColour
   } = useAnnotation();
-  
 
+  // Store the current deck name so we can persist to localStorage
+  const deckNameRef = useRef<string | null>(null);
+
+  // Load deck + layers on mount
   useEffect(() => {
     const currentDeck = localStorage.getItem('currentDeck');
     if (currentDeck) {
@@ -28,8 +31,8 @@ export default function AnnotatePage() {
       if (parsed.images?.length) {
         setImages(parsed.images);
         setCurrentIndex(0);
+        deckNameRef.current = parsed.name;
 
-        // Also attempt to load saved layers for that deck
         const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
         if (savedLayers) {
           setLayers(JSON.parse(savedLayers));
@@ -39,6 +42,13 @@ export default function AnnotatePage() {
       }
     }
   }, []);
+
+  // Persist layers to localStorage whenever they change
+  useEffect(() => {
+    if (deckNameRef.current) {
+      localStorage.setItem(`layers_${deckNameRef.current}`, JSON.stringify(layers));
+    }
+  }, [layers]);
 
   const handlePrev = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
@@ -65,10 +75,10 @@ export default function AnnotatePage() {
           <Toolbar />
         </div>
         <ToolsPanel
-         selectedTool={activeTool}
-        setSelectedTool={setActiveTool}
-        activeColour={activeColour}
-         setActiveColour={setActiveColour}
+          selectedTool={activeTool}
+          setSelectedTool={setActiveTool}
+          activeColour={activeColour}
+          setActiveColour={setActiveColour}
         />
         <div className={styles.workspace}>
           <ImagePanel

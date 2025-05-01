@@ -34,9 +34,17 @@ export default function UploadPage() {
 
     const newDeck = { name: deckName.trim(), images: currentImages };
     const updated = [...decks, newDeck];
+
     setDecks(updated);
     localStorage.setItem('imageDecks', JSON.stringify(updated));
     localStorage.setItem('currentDeck', JSON.stringify(newDeck));
+
+    // Reset fields
+    setDeckName('');
+    setCurrentImages([]);
+    setSelected(null);
+
+    // Redirect to annotate page
     router.push('/annotate');
   };
 
@@ -85,14 +93,23 @@ export default function UploadPage() {
             {decks.map((deck, index) => (
               <div key={index} className={styles.deck}>
                 <input className={styles.deckTitle} value={deck.name} readOnly />
-                <div className={styles.deckRow} onClick={() => handleDeckClick(deck)}>
+                <div
+                  className={styles.deckRow}
+                  onClick={() => handleDeckClick(deck)}
+                  style={{ cursor: 'pointer' }}
+                >
                   {deck.images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className={styles.deckImg}>
                       <img src={img} className={styles.gridImage} />
                     </div>
                   ))}
                 </div>
-                <button className={styles.nextButton}>&gt;</button>
+                <button
+                  className={styles.nextButton}
+                  onClick={() => handleDeckClick(deck)}
+                >
+                  &gt;
+                </button>
               </div>
             ))}
           </div>

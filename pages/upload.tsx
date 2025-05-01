@@ -37,6 +37,11 @@ export default function UploadPage() {
     setDecks(updated);
     localStorage.setItem('imageDecks', JSON.stringify(updated));
     localStorage.setItem('currentDeck', JSON.stringify(newDeck));
+
+    setDeckName('');
+    setCurrentImages([]);
+    setSelected(null);
+
     router.push('/annotate');
   };
 
@@ -48,16 +53,13 @@ export default function UploadPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
           <div className={styles.profileCircle} />
         </div>
 
-        {/* Tabs */}
         <Toolbar />
 
-        {/* Import Section */}
         <div className={styles.importSection}>
           <input
             className={styles.deckInput}
@@ -73,11 +75,15 @@ export default function UploadPage() {
               onUpload={handleUpload}
               onSelect={setSelected}
             />
-            <button className={styles.nextButton} onClick={handleAnnotate}>&gt;</button>
           </div>
+
+          {currentImages.length > 0 && (
+            <button className={styles.annotateButton} onClick={handleAnnotate}>
+              Save & Annotate
+            </button>
+          )}
         </div>
 
-        {/* Decks Section */}
         <div className={styles.importSection}>
           <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
 
@@ -85,14 +91,14 @@ export default function UploadPage() {
             {decks.map((deck, index) => (
               <div key={index} className={styles.deck}>
                 <input className={styles.deckTitle} value={deck.name} readOnly />
-                <div className={styles.deckRow} onClick={() => handleDeckClick(deck)}>
+                <div className={styles.deckRow}>
                   {deck.images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className={styles.deckImg}>
                       <img src={img} className={styles.gridImage} />
                     </div>
                   ))}
+                  <button className={styles.nextButton} onClick={() => handleDeckClick(deck)}>&gt;</button>
                 </div>
-                <button className={styles.nextButton}>&gt;</button>
               </div>
             ))}
           </div>

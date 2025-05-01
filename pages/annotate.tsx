@@ -25,8 +25,13 @@ export default function AnnotatePage() {
       if (parsed.images?.length) {
         setImages(parsed.images);
         setCurrentIndex(0);
-        if (parsed.annotations) {
-          setLayers(parsed.annotations);
+
+        // Also attempt to load saved layers for that deck
+        const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
+        if (savedLayers) {
+          setLayers(JSON.parse(savedLayers));
+        } else {
+          setLayers({});
         }
       }
     }
@@ -43,23 +48,10 @@ export default function AnnotatePage() {
   const currentLayers = layers[currentIndex] || [];
 
   const updateLayers = (updated: any[]) => {
-    const newLayers = {
-      ...layers,
+    setLayers((prev) => ({
+      ...prev,
       [currentIndex]: updated,
-    };
-
-    setLayers(newLayers);
-
-    // Persist to currentDeck in localStorage
-    const currentDeck = localStorage.getItem('currentDeck');
-    if (currentDeck) {
-      const parsed = JSON.parse(currentDeck);
-      const updatedDeck = {
-        ...parsed,
-        annotations: newLayers,
-      };
-      localStorage.setItem('currentDeck', JSON.stringify(updatedDeck));
-    }
+    }));
   };
 
   return (
@@ -78,7 +70,10 @@ export default function AnnotatePage() {
             onNext={handleNext}
             selectedTool={activeTool}
           />
-          <LayersPanel />
+          <LayersPanel
+            layers={currentLayers}
+            setLayers={updateLayers}
+          />
         </div>
       </div>
     </div>

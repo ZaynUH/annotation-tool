@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 
 export type Layer = {
   id: number;
-  type: 'pen' | 'arrow' | 'text' | 'shape' | 'line';
+  type: 'pen' | 'line' | 'arrow' | 'circle' | 'rectangle';
   colour: string;
   points: number[];
   name?: string;
@@ -10,15 +10,15 @@ export type Layer = {
 
 interface AnnotationContextType {
   images: string[];
-  setImages: React.Dispatch<React.SetStateAction<string[]>>;
+  setImages: Dispatch<SetStateAction<string[]>>;
   currentIndex: number;
-  setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentIndex: Dispatch<SetStateAction<number>>;
   layers: Record<number, Layer[]>;
-  setLayers: React.Dispatch<React.SetStateAction<Record<number, Layer[]>>>;
+  setLayers: Dispatch<SetStateAction<Record<number, Layer[]>>>;
   activeTool: string;
-  setActiveTool: React.Dispatch<React.SetStateAction<string>>;
+  setActiveTool: Dispatch<SetStateAction<string>>;
   activeColour: string;
-  setActiveColour: React.Dispatch<React.SetStateAction<string>>;
+  setActiveColour: Dispatch<SetStateAction<string>>;
 }
 
 const AnnotationContext = createContext<AnnotationContextType | undefined>(undefined);
@@ -29,29 +29,6 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<Record<number, Layer[]>>({});
   const [activeTool, setActiveTool] = useState<string>('pen');
   const [activeColour, setActiveColour] = useState<string>('#000000');
-
-  // Load layers from localStorage on mount
-  useEffect(() => {
-    const currentDeck = localStorage.getItem('currentDeck');
-    if (currentDeck) {
-      const parsed = JSON.parse(currentDeck);
-      const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
-      if (savedLayers) {
-        setLayers(JSON.parse(savedLayers));
-      } else {
-        setLayers({});
-      }
-    }
-  }, []);
-
-  // Save layers when they change
-  useEffect(() => {
-    const currentDeck = localStorage.getItem('currentDeck');
-    if (currentDeck) {
-      const parsed = JSON.parse(currentDeck);
-      localStorage.setItem(`layers_${parsed.name}`, JSON.stringify(layers));
-    }
-  }, [layers]);
 
   return (
     <AnnotationContext.Provider

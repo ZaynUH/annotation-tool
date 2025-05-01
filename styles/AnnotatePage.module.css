@@ -1,4 +1,4 @@
-/* ===== PAGE STRUCTURE ===== */
+/* === Layout === */
 .page {
   background-color: #e5e7eb;
   min-height: 100vh;
@@ -25,14 +25,16 @@
   color: black;
 }
 
+.toolbarStrip {
+  border-bottom: 1px solid #d1d5db;
+}
+
 .workspace {
   display: flex;
   padding: 1rem;
-  height: 90%;
 }
 
-
-/* ===== TOOLS PANEL ===== */
+/* === Tools Panel === */
 .toolsWrapper {
   padding: 0.5rem 1rem;
   border-bottom: 1px solid #d1d5db;
@@ -40,25 +42,62 @@
 
 .tools {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .toolButton {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   background-color: #f3f4f6;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .activeTool {
   background-color: #dbeafe;
   border-color: #3b82f6;
-  font-weight: 600;
+  font-weight: bold;
 }
 
+.colorPicker {
+  width: 32px;
+  height: 32px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
 
-/* ===== IMAGE PANEL AREA ===== */
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 120%;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  padding: 0.25rem 0;
+}
+
+.dropdownItem {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dropdownItem:hover {
+  background-color: #f3f4f6;
+}
+
+/* === Image Panel === */
 .imagePanelContainer {
   flex: 1;
   display: flex;
@@ -132,7 +171,7 @@
   object-fit: contain;
 }
 
-/* ===== LAYERS PANEL ===== */
+/* === Layers Panel === */
 .layers {
   width: 250px;
   background-color: #f9fafb;

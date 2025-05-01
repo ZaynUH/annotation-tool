@@ -32,6 +32,7 @@
   font-size: 1.25rem;
   font-weight: 500;
   margin: 0;
+  color: black;
 }
 
 .profileCircle {
@@ -91,6 +92,7 @@
   border-radius: 4px;
   margin-bottom: 1rem;
   box-sizing: border-box;
+  color: black;
 }
 
 /* === Image grid + next arrow === */
@@ -184,6 +186,7 @@
   border-radius: 4px;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  color: black;
 }
 
 .deckRow {

@@ -51,7 +51,7 @@ export default function AnnotatePage() {
       <div className={styles.card}>
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <div className={styles.toolbarStrip}>
-          <span className={`${styles.tab} ${styles.active}`}>Annotate Mode</span>
+          <Toolbar/>
         </div>
         <ToolsPanel selectedTool={activeTool} setSelectedTool={setActiveTool} />
         <div className={styles.workspace}>

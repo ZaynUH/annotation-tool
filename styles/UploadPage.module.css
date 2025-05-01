@@ -18,134 +18,73 @@
   overflow: hidden;
 }
 
+/* === HEADER === */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #000;
 }
 
 .title {
+  margin-bottom: 0.5rem;
   font-size: 1.25rem;
   font-weight: 500;
-  margin: 0;
-}
-
-.profileCircle {
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 1px solid #000;
-  border-radius: 50%;
 }
 
 .toolbar {
   display: flex;
-  border-bottom: 1px solid #d1d1d1;
+  border: 1px solid #999;
 }
 
 .tab {
   flex: 1;
   text-align: center;
-  padding: 0.75rem;
-  background-color: #e0e0e0;
-  font-weight: 500;
-  text-decoration: none;
-  color: black;
-  cursor: pointer;
-  border-right: 1px solid #d1d1d1;
+  padding: 0.5rem;
+  border-right: 1px solid #999;
+  background: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
 .tab:last-child {
   border-right: none;
 }
 
-.tab.active,
-.tab.active:hover {
-  background-color: #d1d5db;
+.active {
+  background: #d1d5db;
 }
 
+/* === Import Section === */
 .importSection {
+  border: 1px solid #ccc;
   margin: 1rem;
   padding: 1rem;
-  border: 1px solid #d1d1d1;
-  border-radius: 6px;
-  background-color: #fff;
+  background: white;
 }
 
 .deckInput {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #d1d1d1;
+  border: 1px solid #ccc;
+  padding: 0.4rem;
+  width: 250px;
+  font-size: 0.95rem;
   border-radius: 4px;
-  font-size: 1rem;
-  outline: none;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-.gridContainer {
+.gridRow {
   display: flex;
   align-items: center;
-  gap: 1rem;
 }
 
-.annotateButton {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #3b82f6;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  align-self: flex-end;
-}
-
-.annotateButton:hover {
-  background-color: #2563eb;
-}
-
-.decksGrid {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  justify-content: space-between;
-}
-
-.deck {
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid #d1d1d1;
-  padding: 1rem;
-  border-radius: 6px;
-  background-color: #fff;
-  position: relative;
 }
 
-.deckTitle {
-  font-weight: 500;
-  font-size: 1rem;
-  border: 1px solid #d1d1d1;
-  border-radius: 4px;
-  padding: 0.25rem;
-  background-color: #f0f0f0;
-  text-align: left;
-}
-
-.deckRow {
-  display: flex;
-  gap: 0.5rem;
-  overflow: hidden;
-  align-items: center;
-}
-
-.deckImg {
-  width: 60px;
+.gridItem {
   aspect-ratio: 2/3;
-  border: 1px solid #d1d1d1;
   background: white;
+  border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,12 +96,53 @@
   object-fit: contain;
 }
 
-.nextButton {
+.arrowButton {
+  margin-left: 0.5rem;
   width: 2rem;
   height: 100%;
-  font-size: 1.5rem;
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  background: white;
+  border: 1px solid #ccc;
+  font-size: 1.25rem;
   cursor: pointer;
+}
+
+/* === Decks === */
+.decksContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.deckBox {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.deckTitle {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  background: #f3f3f3;
+}
+
+.deckImages {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.deckImageThumb {
+  width: 50px;
+  aspect-ratio: 2/3;
+  border: 1px solid #ccc;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

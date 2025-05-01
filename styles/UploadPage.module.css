@@ -85,7 +85,7 @@
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
-  margin-bottom: 1rem;
+  margin-bottom: 0rem;
   box-sizing: border-box;
   color: black;
 }
@@ -98,6 +98,7 @@
   background-color: #e5e5e5; 
   border: 1px solid #d1d1d1;
   border-radius: 6px;
+  padding: 1rem;
 }
 
 .grid {

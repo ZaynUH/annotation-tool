@@ -18,76 +18,94 @@
   overflow: hidden;
 }
 
-/* === HEADER === */
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 1rem;
+  border-bottom: 1px solid #000;
 }
 
 .title {
-  margin-bottom: 0.5rem;
   font-size: 1.25rem;
   font-weight: 500;
+  margin: 0;
 }
 
+.profileCircle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid #000;
+  border-radius: 50%;
+}
+
+/* === Toolbar tabs === */
 .toolbar {
   display: flex;
-  border: 1px solid #999;
+  border-bottom: 1px solid #d1d1d1;
 }
 
 .tab {
   flex: 1;
   text-align: center;
-  padding: 0.5rem;
-  border-right: 1px solid #999;
-  background: #e0e0e0;
-  font-size: 0.95rem;
-  font-weight: 400;
+  padding: 0.75rem;
+  background-color: #e0e0e0;
+  font-weight: 500;
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+  border-right: 1px solid #d1d1d1;
 }
 
 .tab:last-child {
   border-right: none;
 }
 
-.active {
-  background: #d1d5db;
+.tab.active,
+.tab.active:hover {
+  background-color: #d1d5db;
 }
 
-/* === Import Section === */
+/* === Import section === */
 .importSection {
-  border: 1px solid #ccc;
   margin: 1rem;
   padding: 1rem;
-  background: white;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #fff;
 }
 
 .deckInput {
-  border: 1px solid #ccc;
-  padding: 0.4rem;
-  width: 250px;
-  font-size: 0.95rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d1d1;
   border-radius: 4px;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  outline: none;
 }
 
-.gridRow {
+.gridContainer {
   display: flex;
   align-items: center;
+  margin-top: 1rem;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: 1rem;
   flex: 1;
 }
 
 .gridItem {
+  width: 100%;
   aspect-ratio: 2/3;
-  background: white;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d1d1;
+  background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .gridImage {
@@ -96,51 +114,77 @@
   object-fit: contain;
 }
 
-.arrowButton {
-  margin-left: 0.5rem;
-  width: 2rem;
+.upload {
+  position: relative;
+}
+
+.plus {
+  font-size: 2rem;
+  color: #a0a0a0;
+}
+
+.fileInput {
+  position: absolute;
+  width: 100%;
   height: 100%;
-  background: white;
-  border: 1px solid #ccc;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nextButton {
+  margin-left: 0.5rem;
+  width: 2.5rem;
+  aspect-ratio: 2/3;
+  border: 1px solid #d1d1d1;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.25rem;
   cursor: pointer;
 }
 
-/* === Decks === */
-.decksContainer {
+/* === Decks Display === */
+.decksGrid {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  justify-content: space-between;
 }
 
-.deckBox {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
+.deck {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid #d1d1d1;
+  padding: 1rem;
+  border-radius: 6px;
+  background-color: #fff;
+  position: relative;
 }
 
 .deckTitle {
-  font-weight: bold;
-  font-size: 0.95rem;
-  margin-bottom: 0.25rem;
-  padding: 0.3rem;
-  border: 1px solid #ccc;
-  background: #f3f3f3;
+  font-weight: 500;
+  font-size: 1rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  padding: 0.25rem;
+  background-color: #f0f0f0;
+  text-align: left;
 }
 
-.deckImages {
+.deckRow {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  cursor: pointer;
+  margin-top: 0.25rem;
+  overflow: hidden;
 }
 
-.deckImageThumb {
-  width: 50px;
+.deckImg {
+  width: 60px;
   aspect-ratio: 2/3;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d1d1;
   background: white;
   display: flex;
   align-items: center;

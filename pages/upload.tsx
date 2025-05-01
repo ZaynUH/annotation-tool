@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Toolbar from '../components/Toolbar';
 import ImageGrid from '../components/ImageGrid';
 import styles from '../styles/UploadPage.module.css';
 
@@ -28,21 +29,14 @@ export default function UploadPage() {
     setCurrentImages(prev => [...prev, ...newImages]);
   };
 
-  const handleSaveAndAnnotate = () => {
+  const handleAnnotate = () => {
     if (!deckName.trim() || currentImages.length === 0) return;
 
     const newDeck = { name: deckName.trim(), images: currentImages };
     const updated = [...decks, newDeck];
-
     setDecks(updated);
     localStorage.setItem('imageDecks', JSON.stringify(updated));
     localStorage.setItem('currentDeck', JSON.stringify(newDeck));
-
-    // Clear local state
-    setDeckName('');
-    setCurrentImages([]);
-    setSelected(null);
-
     router.push('/annotate');
   };
 
@@ -54,49 +48,51 @@ export default function UploadPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
+        {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
-          <div className={styles.toolbar}>
-            <span className={`${styles.tab} ${styles.active}`}>Import</span>
-            <span className={styles.tab}>Annotate</span>
-            <span className={styles.tab}>Export</span>
-          </div>
+          <div className={styles.profileCircle} />
         </div>
 
+        {/* Tabs */}
+        <Toolbar />
+
+        {/* Import Section */}
         <div className={styles.importSection}>
           <input
             className={styles.deckInput}
+            type="text"
             placeholder="Enter Deck name"
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
           />
 
-          <div className={styles.gridRow}>
+          <div className={styles.gridContainer}>
             <ImageGrid
               images={currentImages}
               onUpload={handleUpload}
               onSelect={setSelected}
             />
-            <button className={styles.arrowButton} onClick={handleSaveAndAnnotate}>
-              &gt;
-            </button>
+            <button className={styles.nextButton} onClick={handleAnnotate}>&gt;</button>
           </div>
         </div>
 
+        {/* Decks Section */}
         <div className={styles.importSection}>
-          <input className={styles.deckInput} value="Your Decks" readOnly />
-          <div className={styles.decksContainer}>
+          <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
+
+          <div className={styles.decksGrid}>
             {decks.map((deck, index) => (
-              <div key={index} className={styles.deckBox}>
+              <div key={index} className={styles.deck}>
                 <input className={styles.deckTitle} value={deck.name} readOnly />
-                <div className={styles.deckImages} onClick={() => handleDeckClick(deck)}>
-                  {deck.images.slice(0, 4).map((img, i) => (
-                    <div key={i} className={styles.deckImageThumb}>
-                      <img src={img} alt={`img-${i}`} className={styles.gridImage} />
+                <div className={styles.deckRow} onClick={() => handleDeckClick(deck)}>
+                  {deck.images.slice(0, 4).map((img, idx) => (
+                    <div key={idx} className={styles.deckImg}>
+                      <img src={img} className={styles.gridImage} />
                     </div>
                   ))}
                 </div>
-                <button className={styles.arrowButton} onClick={() => handleDeckClick(deck)}>&gt;</button>
+                <button className={styles.nextButton}>&gt;</button>
               </div>
             ))}
           </div>

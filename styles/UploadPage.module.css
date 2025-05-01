@@ -178,13 +178,14 @@
 }
 
 .deckTitle {
-  width: fit-content;
+  width: fit-content * 0.5;
   padding: 0.25rem 0.5rem;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  margin-right: 0.5rem;
   color: black;
 }
 

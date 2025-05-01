@@ -79,13 +79,13 @@
 /* === Input (deck name & titles) === */
 .deckInput {
   display: block;
-  width: 100%;
+  width: 33%;
   padding: 0.5rem;
   font-size: 1rem;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
-  margin-bottom: 0rem;
+  margin-right: 0.5rem;
   box-sizing: border-box;
   color: black;
 }
@@ -180,15 +180,13 @@
 }
 
 .deckTitle {
-  width: fit-content;
-  max-width: 50%;
+  width: 75%;
   padding: 0.25rem 0.5rem;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  margin-right: 0.5rem;
   color: black;
 }
 

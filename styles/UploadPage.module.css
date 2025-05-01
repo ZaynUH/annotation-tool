@@ -73,26 +73,20 @@
 
 /* === Section panels === */
 .importSection {
-  position: relative;
   margin: 1rem;
-  background-color: #e5e5e5;
-  border: 1px solid #d1d1d1;
-  border-radius: 6px;
-  padding: 2rem 1rem 1rem; /* extra top padding */
+  padding: 1rem;
 }
 
 /* === Input (deck name & titles) === */
 .deckInput {
-  position: absolute;
-  top: 0;             /* align with panel top */
-  left: 1rem;         /* match panel’s inner padding */
-  width: calc(100% - 2rem);
-  transform: translateY(-50%); /* half its own height */
+  display: block;
+  width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
+  margin-bottom: 1rem;
   box-sizing: border-box;
   color: black;
 }
@@ -102,6 +96,9 @@
   position: relative;
   display: flex;
   align-items: center;
+  background-color: #e5e5e5; /* panel bg */
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
 }
 
 .grid {

@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  Dispatch,
+  SetStateAction,
+} from 'react';
 
 export type Layer = {
   id: number;
@@ -30,6 +38,40 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [activeTool, setActiveTool] = useState<string>('pen');
   const [activeColour, setActiveColour] = useState<string>('#000000');
 
+  // Load currentDeck and populate images + annotations
+  useEffect(() => {
+    const stored = localStorage.getItem('currentDeck');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed.images)) {
+        setImages(parsed.images);
+      }
+      if (parsed.annotations) {
+        setLayers(parsed.annotations);
+      }
+    }
+  }, []);
+
+  // Automatically save annotations into currentDeck in localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('currentDeck');
+    if (stored) {
+      const deck = JSON.parse(stored);
+      deck.annotations = layers;
+      localStorage.setItem('currentDeck', JSON.stringify(deck));
+
+      // Optional: update main deck list
+      const allDecksRaw = localStorage.getItem('imageDecks');
+      if (allDecksRaw) {
+        const allDecks = JSON.parse(allDecksRaw);
+        const updatedDecks = allDecks.map((d: any) =>
+          d.name === deck.name ? { ...deck } : d
+        );
+        localStorage.setItem('imageDecks', JSON.stringify(updatedDecks));
+      }
+    }
+  }, [layers]);
+
   return (
     <AnnotationContext.Provider
       value={{
@@ -42,7 +84,7 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         activeTool,
         setActiveTool,
         activeColour,
-        setActiveColour
+        setActiveColour,
       }}
     >
       {children}

@@ -74,7 +74,6 @@
 /* === Section panels === */
 .importSection {
   margin: 1rem;
-  padding: 1rem;
 }
 
 /* === Input (deck name & titles) === */
@@ -96,7 +95,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  background-color: #e5e5e5; /* panel bg */
+  background-color: #e5e5e5; 
   border: 1px solid #d1d1d1;
   border-radius: 6px;
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import styles from '../styles/ExportPage.module.css';
+import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
+import styles from '../styles/ExportPage.module.css';
 
 interface Deck {
   name: string;
@@ -9,29 +9,40 @@ interface Deck {
 
 export default function ExportPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [exportDeck, setExportDeck] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
 
   useEffect(() => {
     const stored = localStorage.getItem('imageDecks');
-    if (stored) setDecks(JSON.parse(stored));
+    if (stored) {
+      setDecks(JSON.parse(stored));
+    }
   }, []);
 
-  const toggleImageSelection = (img: string) => {
-    setSelectedImages(prev =>
-      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
+  const toggleImage = (img: string) => {
+    setSelectedImages((prev) =>
+      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
-  const handleAddToExportDeck = () => {
+  const addToExportDeck = () => {
     const unique = Array.from(new Set([...exportDeck, ...selectedImages]));
     setExportDeck(unique);
     setSelectedImages([]);
   };
 
   const handleExport = () => {
-    alert('Exported ' + exportDeck.length + ' image(s)!');
-    setExportDeck([]);
+    exportDeck.forEach((img) => {
+      const canvas = exportRefs.current[img];
+      if (canvas) {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'annotated-image.png';
+        a.click();
+      }
+    });
+    alert('Images exported!');
   };
 
   return (
@@ -41,22 +52,22 @@ export default function ExportPage() {
         <Toolbar />
 
         <div className={styles.section}>
-          <input className={styles.deckInput} type="text" value="Deck 1" readOnly />
+          <input className={styles.deckInput} type="text" value="Decks" readOnly />
           <div className={styles.grid}>
-            {decks.flatMap(deck =>
+            {decks.flatMap((deck) =>
               deck.images.map((img, idx) => (
                 <div
                   key={`${deck.name}-${idx}`}
                   className={`${styles.gridItem} ${
                     selectedImages.includes(img) ? styles.selected : ''
                   }`}
-                  onClick={() => toggleImageSelection(img)}
+                  onClick={() => toggleImage(img)}
                 >
                   <img src={img} className={styles.gridImage} />
                 </div>
               ))
             )}
-            <button className={styles.nextButton} onClick={handleAddToExportDeck}>
+            <button className={styles.nextButton} onClick={addToExportDeck}>
               &gt;
             </button>
           </div>
@@ -69,7 +80,14 @@ export default function ExportPage() {
             <div className={styles.deckImages}>
               {exportDeck.map((img, idx) => (
                 <div key={idx} className={styles.gridItem}>
-                  <img src={img} className={styles.gridImage} />
+                  <canvas
+                    ref={(el) => {
+                      if (el) exportRefs.current[img] = el;
+                    }}
+                    width={300}
+                    height={400}
+                  />
+                  {/* TODO: Draw background + annotations using Konva logic or 2D canvas here */}
                 </div>
               ))}
             </div>

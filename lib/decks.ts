@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 
-export async function createDeckWithImages(deckName: string, userId: string, images: string[]) {
-  // Create the deck
+export async function createDeckWithImages(deckName: string, userId: string, imagePaths: string[]) {
   const { data: deck, error: deckError } = await supabase
     .from('decks')
     .insert([{ name: deckName, user_id: userId }])
@@ -12,10 +11,9 @@ export async function createDeckWithImages(deckName: string, userId: string, ima
     return { error: deckError?.message || 'Failed to create deck' };
   }
 
-  // Insert images linked to deck
-  const imageInsert = images.map((url, index) => ({
+  const imageInsert = imagePaths.map((path, index) => ({
     deck_id: deck.id,
-    image_url: url,
+    image_url: path,
     index,
   }));
 
@@ -41,12 +39,8 @@ export async function fetchDecksByUser(userId: string) {
     const sortedImages = (deck.images || [])
       .sort((a, b) => a.index - b.index)
       .map((img) => {
-        const { data: publicUrl } = supabase
-          .storage
-          .from('images')
-          .getPublicUrl(img.image_url); 
-          
-        return publicUrl?.publicUrl ?? '';
+        const { data } = supabase.storage.from('images').getPublicUrl(img.image_url);
+        return data?.publicUrl ?? '';
       });
 
     return {
@@ -58,4 +52,3 @@ export async function fetchDecksByUser(userId: string) {
 
   return { decks };
 }
-

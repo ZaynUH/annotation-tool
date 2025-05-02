@@ -1,4 +1,4 @@
-import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Stage,
   Layer as KonvaLayer,
@@ -7,6 +7,7 @@ import {
   Arrow,
   Rect,
   Circle,
+  Transformer
 } from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
@@ -31,6 +32,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const [isDrawing, setIsDrawing] = useState(false);
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const transformerRef = useRef<any>(null);
     const stageRef = useRef<any>(null);
     const [bgImage] = useImage(imageUrl);
 
@@ -39,6 +42,20 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
     }));
+
+    useEffect(() => {
+      const stage = stageRef.current;
+      const transformer = transformerRef.current;
+      if (!transformer || !selectedId) return;
+
+      const selectedNode = stage.findOne(`#${selectedId}`);
+      if (selectedNode) {
+        transformer.nodes([selectedNode]);
+        transformer.getLayer().batchDraw();
+      } else {
+        transformer.nodes([]);
+      }
+    }, [selectedId]);
 
     const updateLayer = (newLayer: Layer) => {
       const updated: Layer[] = [...currentLayers, newLayer];
@@ -49,7 +66,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const startDrawing = (e: any) => {
-      if (previewOnly) return;
+      if (previewOnly || activeTool === 'select') return;
       const pos = e.target.getStage().getPointerPosition();
 
       if (activeTool === 'pen') {
@@ -80,10 +97,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const endDrawing = (e: any) => {
-      if (previewOnly) return;
-      setIsDrawing(false);
-      if (activeTool === 'pen') return;
-
+      if (previewOnly || activeTool === 'pen' || activeTool === 'select') return;
       const end = e.target.getStage().getPointerPosition();
       if (!startPoint) return;
 
@@ -91,9 +105,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const colour = activeColour;
       const commonProps = { id, type: activeTool as any, colour };
 
-      if (activeTool === 'line') {
-        updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, end.x, end.y] });
-      } else if (activeTool === 'arrow') {
+      if (activeTool === 'line' || activeTool === 'arrow') {
         updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, end.x, end.y] });
       } else if (activeTool === 'rectangle') {
         const x = Math.min(startPoint.x, end.x);
@@ -102,11 +114,16 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         const height = Math.abs(end.y - startPoint.y);
         updateLayer({ ...commonProps, points: [x, y, width, height] });
       } else if (activeTool === 'circle') {
-        const radius = Math.sqrt(Math.pow(end.x - startPoint.x, 2) + Math.pow(end.y - startPoint.y, 2));
+        const radius = Math.sqrt((end.x - startPoint.x) ** 2 + (end.y - startPoint.y) ** 2);
         updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, radius] });
       }
 
       setStartPoint(null);
+    };
+
+    const handleSelect = (id: number) => {
+      if (previewOnly || activeTool !== 'select') return;
+      setSelectedId(id);
     };
 
     return (
@@ -117,6 +134,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         onMousemove={draw}
         onMouseup={endDrawing}
         ref={stageRef}
+        onClick={(e) => {
+          const id = e.target.id();
+          if (activeTool === 'select') {
+            if (id) setSelectedId(Number(id));
+            else setSelectedId(null);
+          }
+        }}
       >
         <KonvaLayer>
           {bgImage && (
@@ -131,49 +155,62 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 return (
                   <Line
                     key={id}
+                    id={id.toString()}
                     points={points}
                     stroke={colour}
                     strokeWidth={2}
                     lineCap="round"
+                    draggable={activeTool === 'select'}
+                    onClick={() => handleSelect(id)}
                   />
                 );
               case 'arrow':
                 return (
                   <Arrow
                     key={id}
+                    id={id.toString()}
                     points={points}
                     stroke={colour}
                     fill={colour}
                     strokeWidth={2}
+                    draggable={activeTool === 'select'}
+                    onClick={() => handleSelect(id)}
                   />
                 );
               case 'rectangle':
                 return (
                   <Rect
                     key={id}
+                    id={id.toString()}
                     x={points[0]}
                     y={points[1]}
                     width={points[2]}
                     height={points[3]}
                     stroke={colour}
                     strokeWidth={2}
+                    draggable={activeTool === 'select'}
+                    onClick={() => handleSelect(id)}
                   />
                 );
               case 'circle':
                 return (
                   <Circle
                     key={id}
+                    id={id.toString()}
                     x={points[0]}
                     y={points[1]}
                     radius={points[2]}
                     stroke={colour}
                     strokeWidth={2}
+                    draggable={activeTool === 'select'}
+                    onClick={() => handleSelect(id)}
                   />
                 );
               default:
                 return null;
             }
           })}
+          <Transformer ref={transformerRef} />
         </KonvaLayer>
       </Stage>
     );

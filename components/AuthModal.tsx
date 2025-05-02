@@ -1,33 +1,36 @@
-'use client';
-
 import { useState } from 'react';
-import { loginUser, signUpUser } from '../lib/AuthContext';
-import styles from '../styles/UploadPage.module.css';
+import { loginUser, signUpUser } from '../lib/auth';
+import { useUser } from '../context/UserContext';
+import styles from '../styles/UploadPage.module.css'; // or your modal styles
 
 interface AuthModalProps {
   onClose: () => void;
-  onSuccess: (user: any) => void;
+  onSuccess?: (user: any) => void;
 }
 
 export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
-  const [username, setUsername] = useState('');
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { setUser } = useUser();
 
-  const handleLogin = async () => {
-    const res = await loginUser(username, password);
-    if (res.error) setError(res.error);
-    else {
-      onSuccess(res.user);
-      onClose();
+  const handleSubmit = async () => {
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill in both fields');
+      return;
     }
-  };
 
-  const handleSignUp = async () => {
-    const res = await signUpUser(username, password);
-    if (res.error) setError(res.error);
-    else {
-      onSuccess(res.user);
+    const action = mode === 'login' ? loginUser : signUpUser;
+    const { user, error: err } = await action(email, password);
+
+    if (err || !user) {
+      setError(err || 'Something went wrong');
+    } else {
+      setUser(user);
+      if (onSuccess) onSuccess(user);
       onClose();
     }
   };
@@ -35,32 +38,37 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalCard}>
-        <button onClick={onClose} className={styles.closeButton}>
-          ✖
-        </button>
-        <h2 className={styles.title}>Welcome!<br />Please Sign in</h2>
+        <button className={styles.closeButton} onClick={onClose}>×</button>
+        <h2 className={styles.title}>{mode === 'login' ? 'Log In' : 'Sign Up'}</h2>
 
         <input
-          type="text"
-          placeholder="Enter username"
           className={styles.input}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
-          type="password"
-          placeholder="Enter password"
           className={styles.input}
+          type="password"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.buttonRow}>
-          <button onClick={handleLogin} className={styles.primaryButton}>Login</button>
-          <button onClick={handleSignUp} className={styles.secondaryButton}>Sign Up</button>
+          <button className={styles.primaryButton} onClick={handleSubmit}>
+            {mode === 'login' ? 'Login' : 'Sign Up'}
+          </button>
+          <button
+            className={styles.secondaryButton}
+            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+          >
+            {mode === 'login' ? 'Need an account?' : 'Already have an account?'}
+          </button>
         </div>
       </div>
     </div>

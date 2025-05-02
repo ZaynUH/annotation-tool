@@ -163,21 +163,21 @@
 }
 
 .layerItem {
+  display: flex;
+  align-items: center;
   background: white;
   border: 1px solid #d1d5db;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 0.25rem;
 }
 
 .layerItemSelected {
-  border-width: 2px;
   border-style: dashed;
   border-color: #3b82f6;
   background-color: #e0f2fe;
 }
+
 
 

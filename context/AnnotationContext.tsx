@@ -11,7 +11,7 @@ export type Layer = {
   id: number;
   type: 'pen' | 'line' | 'arrow' | 'circle' | 'rectangle';
   colour: string;
-  points: number[];
+  points: number[]; // [x1,y1, x2,y2] for lines/arrow; [x,y,width,height] for rect; [x,y,radius] for circle; [..] for pen
   name?: string;
 };
 
@@ -26,7 +26,7 @@ export interface AnnotationContextType {
   setActiveTool: Dispatch<SetStateAction<string>>;
   activeColour: string;
   setActiveColour: Dispatch<SetStateAction<string>>;
-  /** NEW */
+  /** NEW **/
   selectedId: number | null;
   setSelectedId: Dispatch<SetStateAction<number | null>>;
 }
@@ -39,6 +39,7 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<Record<number, Layer[]>>({});
   const [activeTool, setActiveTool] = useState<string>('pen');
   const [activeColour, setActiveColour] = useState<string>('#000000');
+  /** NEW: track selection **/
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   return (
@@ -54,8 +55,9 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setActiveTool,
         activeColour,
         setActiveColour,
+        /** NEW **/
         selectedId,
-        setSelectedId
+        setSelectedId,
       }}
     >
       {children}
@@ -64,9 +66,7 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAnnotation() {
-  const context = useContext(AnnotationContext);
-  if (!context) {
-    throw new Error('useAnnotation must be used inside an AnnotationProvider');
-  }
-  return context;
+  const ctx = useContext(AnnotationContext);
+  if (!ctx) throw new Error('useAnnotation must be used inside AnnotationProvider');
+  return ctx;
 }

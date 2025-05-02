@@ -7,7 +7,7 @@ import {
   Arrow,
   Rect,
   Circle,
-  Transformer
+  Transformer,
 } from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
@@ -46,7 +46,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     useEffect(() => {
       const stage = stageRef.current;
       const transformer = transformerRef.current;
-      if (!transformer || !selectedId) return;
+      if (!transformer || selectedId === null) return;
 
       const selectedNode = stage.findOne(`#${selectedId}`);
       if (selectedNode) {
@@ -97,7 +97,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const endDrawing = (e: any) => {
-      if (previewOnly || activeTool === 'pen' || activeTool === 'select') return;
+      if (previewOnly) return;
+      if (activeTool === 'pen') {
+        setIsDrawing(false);
+        return;
+      }
+      if (activeTool === 'select') return;
+
       const end = e.target.getStage().getPointerPosition();
       if (!startPoint) return;
 

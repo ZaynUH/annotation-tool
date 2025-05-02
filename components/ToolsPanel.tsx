@@ -13,23 +13,27 @@ export default function ToolsPanel({
   activeColour,
   setActiveColour
 }: ToolsPanelProps) {
+  const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle'];
+
   return (
     <div className={styles.toolsWrapper}>
       <div className={styles.tools}>
-        {['pen', 'line', 'arrow', 'rectangle', 'circle'].map(tool => (
+        {tools.map(tool => (
           <button
             key={tool}
             className={`${styles.toolButton} ${selectedTool === tool ? styles.activeTool : ''}`}
             onClick={() => setSelectedTool(tool)}
           >
-            {tool}
+            {tool.charAt(0).toUpperCase() + tool.slice(1)}
           </button>
         ))}
+
         <input
           type="color"
           value={activeColour}
           onChange={(e) => setActiveColour(e.target.value)}
           className={styles.colorPicker}
+          title="Pick Colour"
         />
       </div>
     </div>

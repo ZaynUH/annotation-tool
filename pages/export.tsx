@@ -1,101 +1,168 @@
 import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
 import styles from '../styles/ExportPage.module.css';
+import { Layer } from '../context/AnnotationContext';
+import { Stage, Layer as KonvaLayer, Image as KonvaImage, Line, Arrow, Rect, Circle } from 'react-konva';
+import useImage from 'use-image';
 
-interface Deck {
-  name: string;
-  images: string[];
+interface AnnotatedImageProps {
+  imageUrl: string;
+  layers: Layer[];
+  width: number;
+  height: number;
+  onRender: (url: string) => void;
+}
+
+function AnnotatedImage({ imageUrl, layers, width, height, onRender }: AnnotatedImageProps) {
+  const [bgImage] = useImage(imageUrl);
+  const stageRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (stageRef.current) {
+      const uri = stageRef.current.toDataURL();
+      onRender(uri);
+    }
+  }, [bgImage, layers]);
+
+  return (
+    <Stage width={width} height={height} ref={stageRef}>
+      <KonvaLayer>
+        {bgImage && (
+          <KonvaImage image={bgImage} width={width} height={height} listening={false} />
+        )}
+        {layers.map((layer) => {
+          const { id, type, points, colour } = layer;
+          switch (type) {
+            case 'pen':
+            case 'line':
+              return (
+                <Line
+                  key={id}
+                  points={points}
+                  stroke={colour}
+                  strokeWidth={2}
+                  lineCap="round"
+                />
+              );
+            case 'arrow':
+              return (
+                <Arrow
+                  key={id}
+                  points={points}
+                  stroke={colour}
+                  fill={colour}
+                  strokeWidth={2}
+                />
+              );
+            case 'rectangle':
+              return (
+                <Rect
+                  key={id}
+                  x={points[0]}
+                  y={points[1]}
+                  width={points[2]}
+                  height={points[3]}
+                  stroke={colour}
+                  strokeWidth={2}
+                />
+              );
+            case 'circle':
+              return (
+                <Circle
+                  key={id}
+                  x={points[0]}
+                  y={points[1]}
+                  radius={points[2]}
+                  stroke={colour}
+                  strokeWidth={2}
+                />
+              );
+            default:
+              return null;
+          }
+        })}
+      </KonvaLayer>
+    </Stage>
+  );
 }
 
 export default function ExportPage() {
-  const [decks, setDecks] = useState<Deck[]>([]);
-  const [exportDeck, setExportDeck] = useState<string[]>([]);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
+  const [deck, setDeck] = useState<{ name: string; images: string[] } | null>(null);
+  const [layers, setLayers] = useState<Record<number, Layer[]>>({});
+  const [annotatedUrls, setAnnotatedUrls] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('imageDecks');
-    if (stored) {
-      setDecks(JSON.parse(stored));
+    const currentDeck = localStorage.getItem('currentDeck');
+    if (currentDeck) {
+      const parsed = JSON.parse(currentDeck);
+      setDeck(parsed);
+      const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
+      if (savedLayers) {
+        setLayers(JSON.parse(savedLayers));
+      }
     }
   }, []);
 
-  const toggleImage = (img: string) => {
-    setSelectedImages((prev) =>
-      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
+  const handleToggle = (url: string) => {
+    setSelected((prev) =>
+      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
     );
   };
 
-  const addToExportDeck = () => {
-    const unique = Array.from(new Set([...exportDeck, ...selectedImages]));
-    setExportDeck(unique);
-    setSelectedImages([]);
+  const handleExport = () => {
+    selected.forEach((dataUrl, index) => {
+      const link = document.createElement('a');
+      link.download = `annotated_image_${index + 1}.png`;
+      link.href = dataUrl;
+      link.click();
+    });
   };
 
-  const handleExport = () => {
-    exportDeck.forEach((img) => {
-      const canvas = exportRefs.current[img];
-      if (canvas) {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'annotated-image.png';
-        a.click();
-      }
+  const handleRender = (index: number, uri: string) => {
+    setAnnotatedUrls((prev) => {
+      const copy = [...prev];
+      copy[index] = uri;
+      return copy;
     });
-    alert('Images exported!');
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Image Annotation Tool</h1>
+        <h1 className={styles.title}>Export Annotated Images</h1>
         <Toolbar />
 
-        <div className={styles.section}>
-          <input className={styles.deckInput} type="text" value="Decks" readOnly />
-          <div className={styles.grid}>
-            {decks.flatMap((deck) =>
-              deck.images.map((img, idx) => (
+        {deck && (
+          <>
+            <h2 className={styles.subtitle}>{deck.name}</h2>
+            <div className={styles.grid}>
+              {deck.images.map((imageUrl, index) => (
                 <div
-                  key={`${deck.name}-${idx}`}
+                  key={index}
                   className={`${styles.gridItem} ${
-                    selectedImages.includes(img) ? styles.selected : ''
+                    selected.includes(annotatedUrls[index]) ? styles.selected : ''
                   }`}
-                  onClick={() => toggleImage(img)}
+                  onClick={() => handleToggle(annotatedUrls[index])}
                 >
-                  <img src={img} className={styles.gridImage} />
-                </div>
-              ))
-            )}
-            <button className={styles.nextButton} onClick={addToExportDeck}>
-              &gt;
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <input className={styles.deckInput} type="text" value="Export" readOnly />
-          <div className={styles.exportArea}>
-            <input className={styles.deckInput} type="text" value="File Name" readOnly />
-            <div className={styles.deckImages}>
-              {exportDeck.map((img, idx) => (
-                <div key={idx} className={styles.gridItem}>
-                  <canvas
-                    ref={(el) => {
-                      if (el) exportRefs.current[img] = el;
-                    }}
-                    width={300}
-                    height={400}
+                  <AnnotatedImage
+                    imageUrl={imageUrl}
+                    layers={layers[index] || []}
+                    width={150}
+                    height={200}
+                    onRender={(uri) => handleRender(index, uri)}
                   />
-                  {/* TODO: Draw background + annotations using Konva logic or 2D canvas here */}
                 </div>
               ))}
             </div>
-            <button className={styles.exportButton} onClick={handleExport}>
-              Export
-            </button>
-          </div>
-        </div>
+
+            {selected.length > 0 && (
+              <button className={styles.exportButton} onClick={handleExport}>
+                Export {selected.length} Image{selected.length > 1 ? 's' : ''}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

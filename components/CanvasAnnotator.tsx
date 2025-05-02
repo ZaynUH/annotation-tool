@@ -1,136 +1,183 @@
-import { useRef, useState } from 'react';
-import { Stage, Layer as KonvaLayer, Image as KonvaImage, Line, Rect, Circle } from 'react-konva';
+import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import {
+  Stage,
+  Layer as KonvaLayer,
+  Image as KonvaImage,
+  Line,
+  Arrow,
+  Rect,
+  Circle,
+} from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
 
-interface Props {
+interface CanvasAnnotatorProps {
   imageUrl: string;
   width?: number;
   height?: number;
+  previewOnly?: boolean;
+  layers?: Layer[];
 }
 
-export default function CanvasAnnotator({ imageUrl, width = 600, height = 400 }: Props) {
-  const { currentIndex, layers, setLayers, activeTool, activeColour } = useAnnotation();
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
-  const stageRef = useRef<any>(null);
-  const [bgImage] = useImage(imageUrl);
-  const currentLayers = layers[currentIndex] || [];
+const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
+  ({ imageUrl, width = 300, height = 400, previewOnly = false, layers: previewLayers = [] }, ref) => {
+    const {
+      currentIndex,
+      layers,
+      setLayers,
+      activeTool,
+      activeColour,
+    } = useAnnotation();
 
-  const saveLayer = (newLayer: Layer) => {
-    const updated = [...currentLayers, newLayer];
-    setLayers((prev) => ({ ...prev, [currentIndex]: updated }));
-  };
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+    const stageRef = useRef<any>(null);
+    const [bgImage] = useImage(imageUrl);
 
-  const startDrawing = (e: any) => {
-    const pos = e.target.getStage().getPointerPosition();
-    if (!pos) return;
+    const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
-    if (activeTool === 'pen') {
-      saveLayer({
-        id: Date.now(),
-        type: 'pen',
-        colour: activeColour,
-        points: [pos.x, pos.y],
-      });
-      setIsDrawing(true);
-    }
+    useImperativeHandle(ref, () => ({
+      getStage: () => stageRef.current,
+    }));
 
-    if (['line', 'arrow', 'circle', 'rect'].includes(activeTool)) {
-      setStartPoint(pos);
-    }
-  };
-
-  const draw = (e: any) => {
-    if (!isDrawing || activeTool !== 'pen') return;
-    const point = e.target.getStage().getPointerPosition();
-    const updated = [...(layers[currentIndex] || [])];
-    const lastLine = { ...updated[updated.length - 1] };
-    lastLine.points = lastLine.points.concat([point.x, point.y]);
-    updated[updated.length - 1] = lastLine;
-    setLayers((prev) => ({ ...prev, [currentIndex]: updated }));
-  };
-
-  const endDrawing = (e: any) => {
-    if (isDrawing) setIsDrawing(false);
-    if (!startPoint) return;
-
-    const end = e.target.getStage().getPointerPosition();
-    if (!end) return;
-
-    const newShape: Layer = {
-      id: Date.now(),
-      type: activeTool as Layer['type'],
-      colour: activeColour,
-      points: [startPoint.x, startPoint.y, end.x, end.y],
+    const updateLayer = (newLayer: Layer) => {
+      const updated: Layer[] = [...currentLayers, newLayer];
+      setLayers((prev) => ({
+        ...prev,
+        [currentIndex]: updated,
+      }));
     };
-    saveLayer(newShape);
-    setStartPoint(null);
-  };
 
-  return (
-    <Stage
-      width={width}
-      height={height}
-      ref={stageRef}
-      onMouseDown={startDrawing}
-      onMouseMove={draw}
-      onMouseUp={endDrawing}
-    >
-      <KonvaLayer>
-        {bgImage && (
-          <KonvaImage image={bgImage} width={width} height={height} listening={false} />
-        )}
-        {currentLayers.map((layer) => {
-          const [x1, y1, x2, y2] = layer.points;
-          switch (layer.type) {
-            case 'pen':
-              return (
-                <Line
-                  key={layer.id}
-                  points={layer.points}
-                  stroke={layer.colour}
-                  strokeWidth={2}
-                  lineCap="round"
-                />
-              );
-            case 'line':
-              return (
-                <Line
-                  key={layer.id}
-                  points={[x1, y1, x2, y2]}
-                  stroke={layer.colour}
-                  strokeWidth={2}
-                />
-              );
-            case 'arrow':
-              return (
-                <Line
-                  key={layer.id}
-                  points={[x1, y1, x2, y2]}
-                  stroke={layer.colour}
-                  strokeWidth={2}
-                  pointerLength={10}
-                  pointerWidth={10}
-                  lineCap="round"
-                  lineJoin="round"
-                  tension={0}
-                />
-              );
-            case 'circle': {
-              const radius = Math.hypot(x2 - x1, y2 - y1);
-              return <Circle key={layer.id} x={x1} y={y1} radius={radius} stroke={layer.colour} strokeWidth={2} />;
+    const startDrawing = (e: any) => {
+      if (previewOnly) return;
+      const pos = e.target.getStage().getPointerPosition();
+
+      if (activeTool === 'pen') {
+        const newLine: Layer = {
+          id: Date.now(),
+          type: 'pen',
+          colour: activeColour,
+          points: [pos.x, pos.y],
+        };
+        updateLayer(newLine);
+        setIsDrawing(true);
+      } else {
+        setStartPoint(pos);
+      }
+    };
+
+    const draw = (e: any) => {
+      if (previewOnly || !isDrawing || activeTool !== 'pen') return;
+      const pos = e.target.getStage().getPointerPosition();
+      const updated = [...(layers[currentIndex] || [])];
+      const last = { ...updated[updated.length - 1] };
+      last.points = last.points.concat([pos.x, pos.y]);
+      updated[updated.length - 1] = last;
+      setLayers((prev) => ({
+        ...prev,
+        [currentIndex]: updated,
+      }));
+    };
+
+    const endDrawing = (e: any) => {
+      if (previewOnly) return;
+      setIsDrawing(false);
+      if (activeTool === 'pen') return;
+
+      const end = e.target.getStage().getPointerPosition();
+      if (!startPoint) return;
+
+      const id = Date.now();
+      const colour = activeColour;
+      const commonProps = { id, type: activeTool as any, colour };
+
+      if (activeTool === 'line') {
+        updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, end.x, end.y] });
+      } else if (activeTool === 'arrow') {
+        updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, end.x, end.y] });
+      } else if (activeTool === 'rectangle') {
+        const x = Math.min(startPoint.x, end.x);
+        const y = Math.min(startPoint.y, end.y);
+        const width = Math.abs(end.x - startPoint.x);
+        const height = Math.abs(end.y - startPoint.y);
+        updateLayer({ ...commonProps, points: [x, y, width, height] });
+      } else if (activeTool === 'circle') {
+        const radius = Math.sqrt(Math.pow(end.x - startPoint.x, 2) + Math.pow(end.y - startPoint.y, 2));
+        updateLayer({ ...commonProps, points: [startPoint.x, startPoint.y, radius] });
+      }
+
+      setStartPoint(null);
+    };
+
+    return (
+      <Stage
+        width={width}
+        height={height}
+        onMouseDown={startDrawing}
+        onMousemove={draw}
+        onMouseup={endDrawing}
+        ref={stageRef}
+      >
+        <KonvaLayer>
+          {bgImage && (
+            <KonvaImage image={bgImage} width={width} height={height} listening={false} />
+          )}
+          {currentLayers.map((layer) => {
+            const { id, type, points, colour } = layer;
+
+            switch (type) {
+              case 'pen':
+              case 'line':
+                return (
+                  <Line
+                    key={id}
+                    points={points}
+                    stroke={colour}
+                    strokeWidth={2}
+                    lineCap="round"
+                  />
+                );
+              case 'arrow':
+                return (
+                  <Arrow
+                    key={id}
+                    points={points}
+                    stroke={colour}
+                    fill={colour}
+                    strokeWidth={2}
+                  />
+                );
+              case 'rectangle':
+                return (
+                  <Rect
+                    key={id}
+                    x={points[0]}
+                    y={points[1]}
+                    width={points[2]}
+                    height={points[3]}
+                    stroke={colour}
+                    strokeWidth={2}
+                  />
+                );
+              case 'circle':
+                return (
+                  <Circle
+                    key={id}
+                    x={points[0]}
+                    y={points[1]}
+                    radius={points[2]}
+                    stroke={colour}
+                    strokeWidth={2}
+                  />
+                );
+              default:
+                return null;
             }
-            case 'rectangle': {
-              const width = x2 - x1;
-              const height = y2 - y1;
-              return <Rect key={layer.id} x={x1} y={y1} width={width} height={height} stroke={layer.colour} strokeWidth={2} />;
-            }
-            default:
-              return null;
-          }
-        })}
-      </KonvaLayer>
-    </Stage>
-  );
-}
+          })}
+        </KonvaLayer>
+      </Stage>
+    );
+  }
+);
+
+export default CanvasAnnotator;

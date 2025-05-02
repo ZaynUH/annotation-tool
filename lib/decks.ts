@@ -41,18 +41,21 @@ export async function fetchDecksByUser(userId: string) {
     const sortedImages = (deck.images || [])
       .sort((a, b) => a.index - b.index)
       .map((img) => {
-        const { data: publicUrl } = supabase.storage
+        const { data: publicUrl } = supabase
+          .storage
           .from('images')
-          .getPublicUrl(img.image_url);
-        return publicUrl?.publicUrl || '';
+          .getPublicUrl(img.image_url); 
+          
+        return publicUrl?.publicUrl ?? '';
       });
 
     return {
-      name: deck.name,
       id: deck.id,
+      name: deck.name,
       images: sortedImages,
     };
   });
 
   return { decks };
 }
+

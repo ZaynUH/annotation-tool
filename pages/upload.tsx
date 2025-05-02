@@ -20,11 +20,8 @@ export default function UploadPage() {
 
   const [showModal, setShowModal] = useState(false); 
   const { user } = useUser();
-
-
   const router = useRouter();
 
-  // Load decks on page load or user login
   useEffect(() => {
     if (user) {
       localStorage.removeItem('imageDecks');
@@ -43,11 +40,14 @@ export default function UploadPage() {
     setCurrentImages((prev) => [...prev, ...newImages]);
   };
 
+  const handleRemove = (url: string) => {
+    setCurrentImages((prev) => prev.filter((img) => img !== url));
+  };
+
   const handleAnnotate = async () => {
     if (!deckName.trim() || currentImages.length === 0) return;
 
     const trimmedName = deckName.trim();
-
     if (decks.some((d) => d.name === trimmedName)) {
       alert('You already have a deck with this name');
       return;
@@ -64,7 +64,6 @@ export default function UploadPage() {
       setDeckName('');
       setCurrentImages([]);
       setSelected(null);
-
       router.push('/annotate');
       return;
     }
@@ -80,7 +79,6 @@ export default function UploadPage() {
     setSelected(null);
 
     fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
-
     router.push('/annotate');
   };
 
@@ -97,7 +95,7 @@ export default function UploadPage() {
           <div
             className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
             onClick={() => setShowModal(true)}
-            title={user ? `Logged in as ${user}` : 'Click to log in'}
+            title={user ? `Logged in as ${user.email}` : 'Click to log in'}
           />
         </div>
 
@@ -116,6 +114,7 @@ export default function UploadPage() {
             <ImageGrid
               images={currentImages}
               onUpload={handleUpload}
+              onRemove={handleRemove}
               onSelect={setSelected}
             />
             <button className={styles.nextButton} onClick={handleAnnotate}>
@@ -131,7 +130,6 @@ export default function UploadPage() {
             value="Your Decks"
             readOnly
           />
-
           <div className={styles.decksGrid}>
             {decks.map((deck, index) => (
               <div key={index} className={styles.deck}>
@@ -165,9 +163,7 @@ export default function UploadPage() {
       {showModal && (
         <AuthModal
           onClose={() => setShowModal(false)}
-          onSuccess={(user) => {
-            setShowModal(false)
-          }}
+          onSuccess={() => setShowModal(false)}
         />
       )}
     </div>

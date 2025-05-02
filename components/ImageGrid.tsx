@@ -5,9 +5,10 @@ interface Props {
   images: string[];
   onUpload: (urls: string[]) => void;
   onSelect: (url: string) => void;
+  onRemove: (url: string) => void;
 }
 
-export default function ImageGrid({ images, onUpload, onSelect }: Props) {
+export default function ImageGrid({ images, onUpload, onSelect, onRemove }: Props) {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
@@ -26,10 +27,7 @@ export default function ImageGrid({ images, onUpload, onSelect }: Props) {
         continue;
       }
 
-      const { data } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
-
+      const { data } = supabase.storage.from('images').getPublicUrl(filePath);
       if (data?.publicUrl) {
         uploadedUrls.push(data.publicUrl);
       }
@@ -43,6 +41,15 @@ export default function ImageGrid({ images, onUpload, onSelect }: Props) {
       {images.slice(0, 4).map((src, idx) => (
         <div key={idx} className={styles.gridItem} onClick={() => onSelect(src)}>
           <img src={src} alt={`img-${idx}`} className={styles.gridImage} />
+          <button
+            className={styles.removeButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(src);
+            }}
+          >
+            ✕
+          </button>
         </div>
       ))}
       <label className={`${styles.gridItem} ${styles.upload}`}>

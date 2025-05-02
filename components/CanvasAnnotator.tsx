@@ -58,12 +58,11 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [isDrawing, setIsDrawing] = useState(false);
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
 
-    // Expose to parent
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
     }));
 
-    // Transformer logic (for circle + rect only)
+    // Attach transformer to selected shape
     useEffect(() => {
       const transformer = transformerRef.current;
       if (!transformer || selectedId == null) return;
@@ -73,11 +72,28 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       if (!node || !layerData) return;
 
       if (layerData.type === 'line' || layerData.type === 'arrow') {
-        transformer.nodes([]); // Do not attach transformer
+        transformer.nodes([]); // lines/arrows: no bounding box
         return;
       }
 
       transformer.nodes([node]);
+      transformer.setAttrs({
+        rotateEnabled: true,
+        enabledAnchors: [
+          'top-left',
+          'top-right',
+          'bottom-left',
+          'bottom-right',
+          'top-center',
+          'bottom-center',
+          'middle-left',
+          'middle-right',
+        ],
+        anchorSize: 8,
+        anchorStroke: 'black',
+        anchorFill: 'white',
+        borderDash: [6, 4],
+      });
       transformer.getLayer().batchDraw();
     }, [selectedId, currentLayers]);
 
@@ -173,9 +189,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         const scaleY = node.scaleY();
         const newW = node.width() * scaleX;
         const newH = node.height() * scaleY;
-        const newX = node.x();
-        const newY = node.y();
-        updateLayerPoints(id, [newX, newY, newW, newH]);
+        updateLayerPoints(id, [node.x(), node.y(), newW, newH]);
         node.scale({ x: 1, y: 1 });
       } else if (layer.type === 'circle') {
         const scaleX = node.scaleX();
@@ -245,48 +259,44 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
               onTap: () => setSelectedId(layer.id),
             };
 
-            if (layer.type === 'pen') {
-              return <Line key={layer.id} points={layer.points} lineCap="round" {...common} />;
-            }
+            switch (layer.type) {
+              case 'pen':
+                return <Line key={layer.id} points={layer.points} lineCap="round" {...common} />;
 
-            if (layer.type === 'line') {
-              return (
-                <Line key={layer.id} points={layer.points} {...common} />
-              );
-            }
+              case 'line':
+                return <Line key={layer.id} points={layer.points} hitStrokeWidth={20} {...common} />;
 
-            if (layer.type === 'arrow') {
-              return (
-                <Arrow key={layer.id} points={layer.points} fill={layer.colour} {...common} />
-              );
-            }
+              case 'arrow':
+                return <Arrow key={layer.id} points={layer.points} fill={layer.colour} hitStrokeWidth={20} {...common} />;
 
-            if (layer.type === 'rectangle') {
-              return (
-                <Rect
-                  key={layer.id}
-                  x={layer.points[0]}
-                  y={layer.points[1]}
-                  width={layer.points[2]}
-                  height={layer.points[3]}
-                  {...common}
-                />
-              );
-            }
+              case 'rectangle':
+                return (
+                  <Rect
+                    key={layer.id}
+                    x={layer.points[0]}
+                    y={layer.points[1]}
+                    width={layer.points[2]}
+                    height={layer.points[3]}
+                    fill="transparent"
+                    {...common}
+                  />
+                );
 
-            if (layer.type === 'circle') {
-              return (
-                <Circle
-                  key={layer.id}
-                  x={layer.points[0]}
-                  y={layer.points[1]}
-                  radius={layer.points[2]}
-                  {...common}
-                />
-              );
-            }
+              case 'circle':
+                return (
+                  <Circle
+                    key={layer.id}
+                    x={layer.points[0]}
+                    y={layer.points[1]}
+                    radius={layer.points[2]}
+                    fill="transparent"
+                    {...common}
+                  />
+                );
 
-            return null;
+              default:
+                return null;
+            }
           })}
 
           {/* Transformer for rect/circle */}

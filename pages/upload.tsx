@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Toolbar from '../components/Toolbar';
 import ImageGrid from '../components/ImageGrid';
 import AuthModal from '../components/AuthModal'; 
+import { createDeckWithImages, fetchDecksByUser } from '../lib/decks';
 import styles from '../styles/UploadPage.module.css';
 
 interface Deck {
@@ -21,32 +22,57 @@ export default function UploadPage() {
 
   const router = useRouter();
 
+  // Load decks on page load or user login
   useEffect(() => {
-    const stored = localStorage.getItem('imageDecks');
-    if (stored) setDecks(JSON.parse(stored));
-  }, []);
+    if (user) {
+      localStorage.removeItem('imageDecks');
+      localStorage.removeItem('currentDeck');
 
-  useEffect(() => {
-    localStorage.setItem('imageDecks', JSON.stringify(decks));
-  }, [decks]);
+      fetchDecksByUser(user.id).then(({ decks }) => {
+        setDecks(decks);
+      });
+    } else {
+      const stored = localStorage.getItem('imageDecks');
+      if (stored) setDecks(JSON.parse(stored));
+    }
+  }, [user]);
 
   const handleUpload = (newImages: string[]) => {
     setCurrentImages((prev) => [...prev, ...newImages]);
   };
 
-  const handleAnnotate = () => {
+  const handleAnnotate = async () => {
     if (!deckName.trim() || currentImages.length === 0) return;
 
-    const newDeck = { name: deckName.trim(), images: currentImages };
-    const updated = [...decks, newDeck];
+    const trimmedName = deckName.trim();
 
-    setDecks(updated);
-    localStorage.setItem('imageDecks', JSON.stringify(updated));
-    localStorage.setItem('currentDeck', JSON.stringify(newDeck));
+    if (!user) {
+      const newDeck = { name: trimmedName, images: currentImages };
+      const updated = [...decks, newDeck];
+
+      setDecks(updated);
+      localStorage.setItem('imageDecks', JSON.stringify(updated));
+      localStorage.setItem('currentDeck', JSON.stringify(newDeck));
+
+      setDeckName('');
+      setCurrentImages([]);
+      setSelected(null);
+
+      router.push('/annotate');
+      return;
+    }
+
+    const { deck, error } = await createDeckWithImages(trimmedName, user.id, currentImages);
+    if (error || !deck) {
+      alert('Failed to save to database');
+      return;
+    }
 
     setDeckName('');
     setCurrentImages([]);
     setSelected(null);
+
+    fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
 
     router.push('/annotate');
   };
@@ -59,21 +85,17 @@ export default function UploadPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
           <div
-          className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
-          onClick={() => setShowModal(true)}
-          title={user ? `Logged in as ${user.username}` : 'Click to log in'}
+            className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
+            onClick={() => setShowModal(true)}
+            title={user ? `Logged in as ${user.username}` : 'Click to log in'}
           />
-
         </div>
 
-        {/* Tabs */}
         <Toolbar />
 
-        {/* Import Section */}
         <div className={styles.importSection}>
           <input
             className={styles.deckInput}
@@ -95,7 +117,6 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* Decks Section */}
         <div className={styles.importSection}>
           <input
             className={styles.deckInput}
@@ -115,7 +136,6 @@ export default function UploadPage() {
                 <div
                   className={styles.deckRow}
                   onClick={() => handleDeckClick(deck)}
-                  style={{ cursor: 'pointer' }}
                 >
                   {deck.images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className={styles.deckImg}>
@@ -135,7 +155,6 @@ export default function UploadPage() {
         </div>
       </div>
 
-      {/* Auth Modal */}
       {showModal && (
         <AuthModal
           onClose={() => setShowModal(false)}

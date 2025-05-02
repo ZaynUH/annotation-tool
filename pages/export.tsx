@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
+import { useUser } from '../context/UserContext';
 import styles from '../styles/ExportPage.module.css';
 
 interface Deck {
@@ -12,6 +13,7 @@ export default function ExportPage() {
   const [exportDeck, setExportDeck] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
+  const { user } = useUser();
 
   useEffect(() => {
     const stored = localStorage.getItem('imageDecks');

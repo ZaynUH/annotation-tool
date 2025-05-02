@@ -4,6 +4,7 @@ import Toolbar from '../components/Toolbar';
 import ImageGrid from '../components/ImageGrid';
 import AuthModal from '../components/AuthModal'; 
 import { createDeckWithImages, fetchDecksByUser } from '../lib/decks';
+import { useUser } from '../context/UserContext';
 import styles from '../styles/UploadPage.module.css';
 
 interface Deck {
@@ -18,7 +19,8 @@ export default function UploadPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
 
   const [showModal, setShowModal] = useState(false); 
-  const [user, setUser] = useState<any>(null); 
+  const { user } = useUser();
+
 
   const router = useRouter();
 
@@ -45,6 +47,11 @@ export default function UploadPage() {
     if (!deckName.trim() || currentImages.length === 0) return;
 
     const trimmedName = deckName.trim();
+
+    if (decks.some((d) => d.name === trimmedName)) {
+      alert('You already have a deck with this name');
+      return;
+    }
 
     if (!user) {
       const newDeck = { name: trimmedName, images: currentImages };
@@ -90,7 +97,7 @@ export default function UploadPage() {
           <div
             className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
             onClick={() => setShowModal(true)}
-            title={user ? `Logged in as ${user.username}` : 'Click to log in'}
+            title={user ? `Logged in as ${user}` : 'Click to log in'}
           />
         </div>
 
@@ -159,8 +166,7 @@ export default function UploadPage() {
         <AuthModal
           onClose={() => setShowModal(false)}
           onSuccess={(user) => {
-            setUser(user);
-            console.log('Logged in:', user.username);
+            setShowModal(false)
           }}
         />
       )}

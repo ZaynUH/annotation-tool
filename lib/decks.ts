@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 
-export async function createDeckWithImages(deckName: string, userId: string, imagePaths: string[]) {
+const BUCKET = 'images';
+
+export async function createDeckWithImages(deckName: string, userId: string, images: string[]) {
   const { data: deck, error: deckError } = await supabase
     .from('decks')
     .insert([{ name: deckName, user_id: userId }])
@@ -11,9 +13,9 @@ export async function createDeckWithImages(deckName: string, userId: string, ima
     return { error: deckError?.message || 'Failed to create deck' };
   }
 
-  const imageInsert = imagePaths.map((path, index) => ({
+  const imageInsert = images.map((filename, index) => ({
     deck_id: deck.id,
-    image_url: path,
+    image_url: filename, // filename only
     index,
   }));
 
@@ -39,8 +41,7 @@ export async function fetchDecksByUser(userId: string) {
     const sortedImages = (deck.images || [])
       .sort((a, b) => a.index - b.index)
       .map((img) => {
-        const { data } = supabase.storage.from('images').getPublicUrl(img.image_url);
-        return data?.publicUrl ?? '';
+        return `https://<your-project-id>.supabase.co/storage/v1/object/public/${BUCKET}/${img.image_url}`;
       });
 
     return {

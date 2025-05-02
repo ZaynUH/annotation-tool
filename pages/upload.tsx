@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Toolbar from '../components/Toolbar';
 import ImageGrid from '../components/ImageGrid';
-import AuthModal from '../components/AuthModal'; 
+import AuthModal from '../components/AuthModal';
 import { createDeckWithImages, fetchDecksByUser } from '../lib/decks';
 import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/UploadPage.module.css';
 
 interface Deck {
+  id?: string;
   name: string;
   images: string[];
 }
@@ -36,11 +37,11 @@ export default function UploadPage() {
   }, [user]);
 
   const handleUploadSelect = (newFiles: File[]) => {
-    setImageFiles(prev => [...prev, ...newFiles]);
+    setImageFiles((prev) => [...prev, ...newFiles]);
   };
 
   const handleRemove = (file: File) => {
-    setImageFiles(prev => prev.filter(f => f !== file));
+    setImageFiles((prev) => prev.filter((f) => f !== file));
   };
 
   const handleAnnotate = async () => {
@@ -52,7 +53,7 @@ export default function UploadPage() {
       return;
     }
 
-    let uploadedUrls: string[] = [];
+    let uploadedPaths: string[] = [];
 
     if (user) {
       for (const file of imageFiles) {
@@ -66,11 +67,10 @@ export default function UploadPage() {
           continue;
         }
 
-        const { data } = supabase.storage.from('images').getPublicUrl(filePath);
-        if (data?.publicUrl) uploadedUrls.push(data.publicUrl);
+        uploadedPaths.push(filePath); // store the storage path
       }
 
-      const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedUrls);
+      const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
       if (error || !deck) {
         alert('Failed to save to database');
         return;
@@ -79,7 +79,7 @@ export default function UploadPage() {
       localStorage.setItem('currentDeck', JSON.stringify(deck));
       fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
     } else {
-      const previewUrls = imageFiles.map(file => URL.createObjectURL(file));
+      const previewUrls = imageFiles.map((file) => URL.createObjectURL(file));
       const newDeck = { name: trimmedName, images: previewUrls };
       const updated = [...decks, newDeck];
       localStorage.setItem('imageDecks', JSON.stringify(updated));

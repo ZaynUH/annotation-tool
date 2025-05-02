@@ -5,13 +5,15 @@ interface ToolsPanelProps {
   setSelectedTool: (tool: string) => void;
   activeColour: string;
   setActiveColour: (colour: string) => void;
+  onSave: () => void;
 }
 
 export default function ToolsPanel({
   selectedTool,
   setSelectedTool,
   activeColour,
-  setActiveColour
+  setActiveColour,
+  onSave
 }: ToolsPanelProps) {
   const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle'];
 
@@ -35,6 +37,13 @@ export default function ToolsPanel({
           className={styles.colorPicker}
           title="Pick Colour"
         />
+
+        <button
+          className={styles.toolButton}
+          onClick={onSave}
+        >
+          Save
+        </button>
       </div>
     </div>
   );

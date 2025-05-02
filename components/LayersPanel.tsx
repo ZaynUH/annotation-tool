@@ -7,34 +7,17 @@ interface LayersPanelProps {
   setLayers: (updated: Layer[]) => void;
 }
 
-export default function LayersPanel({
-  layers,
-  setLayers,
-}: LayersPanelProps) {
+export default function LayersPanel({ layers, setLayers }: LayersPanelProps) {
   const {
     selectedId,
     setSelectedId,
-    setActiveTool,
+    setActiveTool
   } = useAnnotation();
 
-  const handleDelete = (id: number) => {
-    setLayers(layers.filter((l) => l.id !== id));
-    if (selectedId === id) {
-      setSelectedId(null);
-    }
-  };
-
-  const handleAdd = () => {
-    const newLayer: Layer = {
-      id: Date.now(),
-      type: 'pen',
-      colour: '#000000',
-      points: [],
-      name: `Layer ${layers.length + 1}`,
-    };
-    setLayers([...layers, newLayer]);
-    setActiveTool('select');
-    setSelectedId(newLayer.id);
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setLayers(layers.filter(l => l.id !== id));
+    if (selectedId === id) setSelectedId(null);
   };
 
   return (
@@ -43,7 +26,8 @@ export default function LayersPanel({
       {layers.length === 0 && (
         <p style={{ color: '#6b7280' }}>No layers yet</p>
       )}
-      {layers.map((layer) => (
+
+      {layers.map(layer => (
         <div
           key={layer.id}
           className={
@@ -58,28 +42,14 @@ export default function LayersPanel({
         >
           {layer.name || layer.type}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(layer.id);
-            }}
+            onClick={e => handleDelete(e, layer.id)}
             style={{ marginLeft: 8, color: 'red' }}
           >
             ✖
           </button>
         </div>
       ))}
-
-      <button
-        onClick={handleAdd}
-        style={{
-          marginTop: '1rem',
-          backgroundColor: '#d1d5db',
-          padding: '0.5rem',
-          borderRadius: '4px',
-        }}
-      >
-        + Add Layer
-      </button>
     </div>
-  );
+  )
 }
+

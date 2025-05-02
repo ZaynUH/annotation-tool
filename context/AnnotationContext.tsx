@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  Dispatch,
+  SetStateAction
+} from 'react';
 
 export type Layer = {
   id: number;
@@ -19,6 +26,7 @@ export interface AnnotationContextType {
   setActiveTool: Dispatch<SetStateAction<string>>;
   activeColour: string;
   setActiveColour: Dispatch<SetStateAction<string>>;
+  /** NEW */
   selectedId: number | null;
   setSelectedId: Dispatch<SetStateAction<number | null>>;
 }
@@ -31,7 +39,6 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<Record<number, Layer[]>>({});
   const [activeTool, setActiveTool] = useState<string>('pen');
   const [activeColour, setActiveColour] = useState<string>('#000000');
-  /** NEW */
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   return (
@@ -47,9 +54,8 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         setActiveTool,
         activeColour,
         setActiveColour,
-        /** NEW */
         selectedId,
-        setSelectedId,
+        setSelectedId
       }}
     >
       {children}

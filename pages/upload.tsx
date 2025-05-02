@@ -5,6 +5,7 @@ import ImageGrid from '../components/ImageGrid';
 import AuthModal from '../components/AuthModal'; 
 import { createDeckWithImages, fetchDecksByUser } from '../lib/decks';
 import { useUser } from '../context/UserContext';
+import { supabase } from '../lib/supabase';
 import styles from '../styles/UploadPage.module.css';
 
 interface Deck {
@@ -14,11 +15,10 @@ interface Deck {
 
 export default function UploadPage() {
   const [deckName, setDeckName] = useState('');
-  const [currentImages, setCurrentImages] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [selected, setSelected] = useState<File | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
-
-  const [showModal, setShowModal] = useState(false); 
+  const [showModal, setShowModal] = useState(false);
   const { user } = useUser();
   const router = useRouter();
 
@@ -26,7 +26,6 @@ export default function UploadPage() {
     if (user) {
       localStorage.removeItem('imageDecks');
       localStorage.removeItem('currentDeck');
-
       fetchDecksByUser(user.id).then(({ decks }) => {
         setDecks(decks);
       });
@@ -36,54 +35,61 @@ export default function UploadPage() {
     }
   }, [user]);
 
-  const handleUpload = (newImages: string[]) => {
-    setCurrentImages((prev) => [...prev, ...newImages]);
+  const handleUploadSelect = (newFiles: File[]) => {
+    setImageFiles(prev => [...prev, ...newFiles]);
   };
 
-  const handleRemove = (url: string) => {
-    setCurrentImages((prev) => prev.filter((img) => img !== url));
+  const handleRemove = (file: File) => {
+    setImageFiles(prev => prev.filter(f => f !== file));
   };
 
   const handleAnnotate = async () => {
-    if (!deckName.trim() || currentImages.length === 0) return;
-
+    if (!deckName.trim() || imageFiles.length === 0) return;
     const trimmedName = deckName.trim();
+
     if (decks.some((d) => d.name === trimmedName)) {
       alert('You already have a deck with this name');
       return;
     }
 
-    if (!user) {
-      const newDeck = { name: trimmedName, images: currentImages };
-      const updated = [...decks, newDeck];
+    let uploadedUrls: string[] = [];
 
-      setDecks(updated);
+    if (user) {
+      for (const file of imageFiles) {
+        const filePath = `${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload failed:', uploadError.message);
+          continue;
+        }
+
+        const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+        if (data?.publicUrl) uploadedUrls.push(data.publicUrl);
+      }
+
+      const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedUrls);
+      if (error || !deck) {
+        alert('Failed to save to database');
+        return;
+      }
+
+      localStorage.setItem('currentDeck', JSON.stringify(deck));
+      fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
+    } else {
+      const previewUrls = imageFiles.map(file => URL.createObjectURL(file));
+      const newDeck = { name: trimmedName, images: previewUrls };
+      const updated = [...decks, newDeck];
       localStorage.setItem('imageDecks', JSON.stringify(updated));
       localStorage.setItem('currentDeck', JSON.stringify(newDeck));
-
-      setDeckName('');
-      setCurrentImages([]);
-      setSelected(null);
-      router.push('/annotate');
-      return;
-    }
-
-    const { deck, error } = await createDeckWithImages(trimmedName, user.id, currentImages);
-    if (error || !deck) {
-      alert('Failed to save to database');
-      return;
+      setDecks(updated);
     }
 
     setDeckName('');
-    setCurrentImages([]);
+    setImageFiles([]);
     setSelected(null);
-
-    fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
-    router.push('/annotate');
-  };
-
-  const handleDeckClick = (deck: Deck) => {
-    localStorage.setItem('currentDeck', JSON.stringify(deck));
     router.push('/annotate');
   };
 
@@ -109,13 +115,12 @@ export default function UploadPage() {
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
           />
-
           <div className={styles.gridContainer}>
             <ImageGrid
-              images={currentImages}
-              onUpload={handleUpload}
-              onRemove={handleRemove}
+              images={imageFiles}
               onSelect={setSelected}
+              onRemove={handleRemove}
+              onUploadSelect={handleUploadSelect}
             />
             <button className={styles.nextButton} onClick={handleAnnotate}>
               &gt;
@@ -124,23 +129,17 @@ export default function UploadPage() {
         </div>
 
         <div className={styles.importSection}>
-          <input
-            className={styles.deckInput}
-            type="text"
-            value="Your Decks"
-            readOnly
-          />
+          <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
           <div className={styles.decksGrid}>
             {decks.map((deck, index) => (
               <div key={index} className={styles.deck}>
-                <input
-                  className={styles.deckTitle}
-                  value={deck.name}
-                  readOnly
-                />
+                <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div
                   className={styles.deckRow}
-                  onClick={() => handleDeckClick(deck)}
+                  onClick={() => {
+                    localStorage.setItem('currentDeck', JSON.stringify(deck));
+                    router.push('/annotate');
+                  }}
                 >
                   {deck.images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className={styles.deckImg}>
@@ -150,7 +149,10 @@ export default function UploadPage() {
                 </div>
                 <button
                   className={styles.nextButton}
-                  onClick={() => handleDeckClick(deck)}
+                  onClick={() => {
+                    localStorage.setItem('currentDeck', JSON.stringify(deck));
+                    router.push('/annotate');
+                  }}
                 >
                   &gt;
                 </button>

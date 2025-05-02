@@ -171,7 +171,8 @@
 }
 
 .layerItemSelected {
-  border: 2px dashed #3b82f6;
   background-color: #e0f2fe;
+  border: 2px dashed #3b82f6;
 }
+
 

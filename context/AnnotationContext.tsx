@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 
 export type Layer = {
   id: number;
@@ -8,7 +8,7 @@ export type Layer = {
   name?: string;
 };
 
-interface AnnotationContextType {
+export interface AnnotationContextType {
   images: string[];
   setImages: Dispatch<SetStateAction<string[]>>;
   currentIndex: number;
@@ -19,6 +19,8 @@ interface AnnotationContextType {
   setActiveTool: Dispatch<SetStateAction<string>>;
   activeColour: string;
   setActiveColour: Dispatch<SetStateAction<string>>;
+  selectedId: number | null;
+  setSelectedId: Dispatch<SetStateAction<number | null>>;
 }
 
 const AnnotationContext = createContext<AnnotationContextType | undefined>(undefined);
@@ -29,6 +31,8 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<Record<number, Layer[]>>({});
   const [activeTool, setActiveTool] = useState<string>('pen');
   const [activeColour, setActiveColour] = useState<string>('#000000');
+  /** NEW */
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   return (
     <AnnotationContext.Provider
@@ -42,7 +46,10 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         activeTool,
         setActiveTool,
         activeColour,
-        setActiveColour
+        setActiveColour,
+        /** NEW */
+        selectedId,
+        setSelectedId,
       }}
     >
       {children}

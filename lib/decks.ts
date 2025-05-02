@@ -37,10 +37,22 @@ export async function fetchDecksByUser(userId: string) {
 
   if (error) return { error: error.message, decks: [] };
 
-  const decks = data.map((deck) => ({
-    name: deck.name,
-    images: (deck.images || []).sort((a, b) => a.index - b.index).map((img) => img.image_url),
-  }));
+  const decks = data.map((deck) => {
+    const sortedImages = (deck.images || [])
+      .sort((a, b) => a.index - b.index)
+      .map((img) => {
+        const { data: publicUrl } = supabase.storage
+          .from('images')
+          .getPublicUrl(img.image_url);
+        return publicUrl?.publicUrl || '';
+      });
+
+    return {
+      name: deck.name,
+      id: deck.id,
+      images: sortedImages,
+    };
+  });
 
   return { decks };
 }

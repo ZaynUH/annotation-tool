@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Toolbar from '../components/Toolbar';
 import ImageGrid from '../components/ImageGrid';
+import AuthModal from '../components/AuthModal'; 
 import styles from '../styles/UploadPage.module.css';
 
 interface Deck {
@@ -14,6 +15,10 @@ export default function UploadPage() {
   const [currentImages, setCurrentImages] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
+
+  const [showModal, setShowModal] = useState(false); 
+  const [user, setUser] = useState<any>(null); 
+
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +31,7 @@ export default function UploadPage() {
   }, [decks]);
 
   const handleUpload = (newImages: string[]) => {
-    setCurrentImages(prev => [...prev, ...newImages]);
+    setCurrentImages((prev) => [...prev, ...newImages]);
   };
 
   const handleAnnotate = () => {
@@ -39,12 +44,10 @@ export default function UploadPage() {
     localStorage.setItem('imageDecks', JSON.stringify(updated));
     localStorage.setItem('currentDeck', JSON.stringify(newDeck));
 
-    // Reset fields
     setDeckName('');
     setCurrentImages([]);
     setSelected(null);
 
-    // Redirect to annotate page
     router.push('/annotate');
   };
 
@@ -59,7 +62,12 @@ export default function UploadPage() {
         {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
-          <div className={styles.profileCircle} />
+          <div
+          className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
+          onClick={() => setShowModal(true)}
+          title={user ? `Logged in as ${user.username}` : 'Click to log in'}
+          />
+
         </div>
 
         {/* Tabs */}
@@ -81,18 +89,29 @@ export default function UploadPage() {
               onUpload={handleUpload}
               onSelect={setSelected}
             />
-            <button className={styles.nextButton} onClick={handleAnnotate}>&gt;</button>
+            <button className={styles.nextButton} onClick={handleAnnotate}>
+              &gt;
+            </button>
           </div>
         </div>
 
         {/* Decks Section */}
         <div className={styles.importSection}>
-          <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
+          <input
+            className={styles.deckInput}
+            type="text"
+            value="Your Decks"
+            readOnly
+          />
 
           <div className={styles.decksGrid}>
             {decks.map((deck, index) => (
               <div key={index} className={styles.deck}>
-                <input className={styles.deckTitle} value={deck.name} readOnly />
+                <input
+                  className={styles.deckTitle}
+                  value={deck.name}
+                  readOnly
+                />
                 <div
                   className={styles.deckRow}
                   onClick={() => handleDeckClick(deck)}
@@ -115,6 +134,17 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      {showModal && (
+        <AuthModal
+          onClose={() => setShowModal(false)}
+          onSuccess={(user) => {
+            setUser(user);
+            console.log('Logged in:', user.username);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -38,8 +38,18 @@
   width: 1.5rem;
   height: 1.5rem;
   border: 1px solid #000;
-  border-radius: 50%;
+  border-radius: 9999px;
+  cursor: pointer;
 }
+
+.loggedIn {
+  background-color: #10b981; /* green */
+}
+
+.loggedOut {
+  background-color: #ef4444; /* red */
+}
+
 
 /* === Tabs === */
 .toolbar {
@@ -219,4 +229,79 @@
   top: 50%;
   transform: translateY(-50%);
   margin: 0;
+}
+
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modalCard {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  width: 24rem;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.closeButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.25rem;
+  color: #888;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.title {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.error {
+  color: #e00;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.primaryButton {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  background-color: transparent;
+  border-radius: 4px;
+  cursor: pointer;
 }

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 
+const PROJECT_URL = 'https://sflyeuxvdpndrwuofgqb.supabase.co'; // ✅ Your project URL
 const BUCKET = 'images';
 
 export async function createDeckWithImages(deckName: string, userId: string, images: string[]) {
@@ -15,7 +16,7 @@ export async function createDeckWithImages(deckName: string, userId: string, ima
 
   const imageInsert = images.map((filename, index) => ({
     deck_id: deck.id,
-    image_url: filename, // filename only
+    image_url: filename, // filename only, not full URL
     index,
   }));
 
@@ -40,9 +41,7 @@ export async function fetchDecksByUser(userId: string) {
   const decks = data.map((deck) => {
     const sortedImages = (deck.images || [])
       .sort((a, b) => a.index - b.index)
-      .map((img) => {
-        return `https://<your-project-id>.supabase.co/storage/v1/object/public/${BUCKET}/${img.image_url}`;
-      });
+      .map((img) => `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${img.image_url}`);
 
     return {
       id: deck.id,

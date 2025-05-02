@@ -40,7 +40,7 @@ export default function ImagePanel({ images, currentIndex, onPrev, onNext }: Ima
 
         {/* Main image */}
         <div className={styles.imageBoxLarge}>
-          {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={300} height={400} />}
+          {imageUrl && <CanvasAnnotator imageUrl={imageUrl}/>}
         </div>
 
         {/* Right thumbnail (only if next image exists) */}

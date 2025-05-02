@@ -1,85 +1,99 @@
 import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
 import styles from '../styles/ExportPage.module.css';
-import dynamic from 'next/dynamic';
 
-const CanvasAnnotator = dynamic(() => import('../components/CanvasAnnotator'), { ssr: false });
+interface Deck {
+  name: string;
+  images: string[];
+}
 
 export default function ExportPage() {
-  const [deck, setDeck] = useState<{ name: string; images: string[] }>({ name: '', images: [] });
-  const [layers, setLayers] = useState<Record<number, any[]>>({});
-  const [selectedImages, setSelectedImages] = useState<number[]>([]);
-  const [exportUrls, setExportUrls] = useState<string[]>([]);
-  const refs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
+  const [exportDeck, setExportDeck] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
 
-  // Load the deck + its layers
   useEffect(() => {
-    const current = localStorage.getItem('currentDeck');
-    if (current) {
-      const parsed = JSON.parse(current);
-      setDeck(parsed);
-      const saved = localStorage.getItem(`layers_${parsed.name}`);
-      if (saved) {
-        setLayers(JSON.parse(saved));
-      }
+    const stored = localStorage.getItem('imageDecks');
+    if (stored) {
+      setDecks(JSON.parse(stored));
     }
   }, []);
 
-  const toggleImageSelection = (idx: number) => {
-    setSelectedImages(prev =>
-      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+  const toggleImage = (img: string) => {
+    setSelectedImages((prev) =>
+      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
+  const addToExportDeck = () => {
+    const unique = Array.from(new Set([...exportDeck, ...selectedImages]));
+    setExportDeck(unique);
+    setSelectedImages([]);
+  };
+
   const handleExport = () => {
-    const urls: string[] = [];
-    refs.current.forEach((ref, idx) => {
-      if (ref && selectedImages.includes(idx)) {
-        const dataUrl = ref.toDataURL();
-        urls.push(dataUrl);
+    exportDeck.forEach((img) => {
+      const canvas = exportRefs.current[img];
+      if (canvas) {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'annotated-image.png';
+        a.click();
       }
     });
-    setExportUrls(urls);
+    alert('Images exported!');
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Export Annotated Images</h1>
+        <h1 className={styles.title}>Image Annotation Tool</h1>
         <Toolbar />
 
-        {/* Selection Grid */}
         <div className={styles.section}>
-          <input className={styles.deckInput} value={deck.name || 'Current Deck'} readOnly />
+          <input className={styles.deckInput} type="text" value="Decks" readOnly />
           <div className={styles.grid}>
-            {deck.images.map((img, idx) => (
-              <div
-                key={idx}
-                className={`${styles.gridItem} ${selectedImages.includes(idx) ? styles.selected : ''}`}
-                onClick={() => toggleImageSelection(idx)}
-              >
-                <CanvasAnnotator
-                  imageUrl={img}
-                  width={200}
-                  height={300}
-                  previewOnly
-                  layers={layers[idx] || []}
-                  ref={(el) => (refs.current[idx] = el?.getStage().toCanvas())}
-                />
-              </div>
-            ))}
+            {decks.flatMap((deck) =>
+              deck.images.map((img, idx) => (
+                <div
+                  key={`${deck.name}-${idx}`}
+                  className={`${styles.gridItem} ${
+                    selectedImages.includes(img) ? styles.selected : ''
+                  }`}
+                  onClick={() => toggleImage(img)}
+                >
+                  <img src={img} className={styles.gridImage} />
+                </div>
+              ))
+            )}
+            <button className={styles.nextButton} onClick={addToExportDeck}>
+              &gt;
+            </button>
           </div>
         </div>
 
-        {/* Export Result */}
         <div className={styles.section}>
-          <button className={styles.exportButton} onClick={handleExport}>Export</button>
-          <div className={styles.grid}>
-            {exportUrls.map((url, idx) => (
-              <a key={idx} href={url} download={`annotated-${idx + 1}.png`}>
-                <img src={url} className={styles.gridImage} />
-              </a>
-            ))}
+          <input className={styles.deckInput} type="text" value="Export" readOnly />
+          <div className={styles.exportArea}>
+            <input className={styles.deckInput} type="text" value="File Name" readOnly />
+            <div className={styles.deckImages}>
+              {exportDeck.map((img, idx) => (
+                <div key={idx} className={styles.gridItem}>
+                  <canvas
+                    ref={(el) => {
+                      if (el) exportRefs.current[img] = el;
+                    }}
+                    width={300}
+                    height={400}
+                  />
+                  {/* TODO: Draw background + annotations using Konva logic or 2D canvas here */}
+                </div>
+              ))}
+            </div>
+            <button className={styles.exportButton} onClick={handleExport}>
+              Export
+            </button>
           </div>
         </div>
       </div>

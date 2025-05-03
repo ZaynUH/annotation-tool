@@ -4,7 +4,7 @@ import React, {
   useState,
   ReactNode,
   Dispatch,
-  SetStateAction
+  SetStateAction,
 } from 'react';
 
 export type Layer = {
@@ -32,6 +32,7 @@ export interface AnnotationContextType {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  pushHistory: (index: number, newState: Layer[]) => void;
 }
 
 const AnnotationContext = createContext<AnnotationContextType | undefined>(undefined);
@@ -47,46 +48,54 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<Record<number, Layer[][]>>({});
   const [future, setFuture] = useState<Record<number, Layer[][]>>({});
 
-  const pushToHistory = (index: number, newLayers: Layer[]) => {
+  const pushHistory = (index: number, newState: Layer[]) => {
     setHistory(prev => ({
       ...prev,
-      [index]: [...(prev[index] || []), newLayers]
+      [index]: [...(prev[index] || []), newState],
     }));
     setFuture(prev => ({ ...prev, [index]: [] }));
   };
 
   const undo = () => {
-    const prevStack = history[currentIndex] || [];
-    const current = layers[currentIndex] || [];
+    const currentHistory = history[currentIndex] || [];
+    if (currentHistory.length === 0) return;
 
-    if (prevStack.length === 0) return;
-    const prevState = prevStack[prevStack.length - 1];
+    const prevState = currentHistory[currentHistory.length - 1];
+    const currentState = layers[currentIndex] || [];
+
     setHistory(prev => ({
       ...prev,
-      [currentIndex]: prev[currentIndex].slice(0, -1)
+      [currentIndex]: prev[currentIndex].slice(0, -1),
     }));
     setFuture(prev => ({
       ...prev,
-      [currentIndex]: [current, ...(prev[currentIndex] || [])]
+      [currentIndex]: [currentState, ...(prev[currentIndex] || [])],
     }));
-    setLayers(prev => ({ ...prev, [currentIndex]: prevState }));
+    setLayers(prev => ({
+      ...prev,
+      [currentIndex]: prevState,
+    }));
   };
 
   const redo = () => {
     const futureStack = future[currentIndex] || [];
-    const current = layers[currentIndex] || [];
-
     if (futureStack.length === 0) return;
+
     const nextState = futureStack[0];
+    const currentState = layers[currentIndex] || [];
+
     setFuture(prev => ({
       ...prev,
-      [currentIndex]: prev[currentIndex].slice(1)
+      [currentIndex]: prev[currentIndex].slice(1),
     }));
     setHistory(prev => ({
       ...prev,
-      [currentIndex]: [...(prev[currentIndex] || []), current]
+      [currentIndex]: [...(prev[currentIndex] || []), currentState],
     }));
-    setLayers(prev => ({ ...prev, [currentIndex]: nextState }));
+    setLayers(prev => ({
+      ...prev,
+      [currentIndex]: nextState,
+    }));
   };
 
   const canUndo = (history[currentIndex] || []).length > 0;
@@ -110,7 +119,8 @@ export function AnnotationProvider({ children }: { children: ReactNode }) {
         undo,
         redo,
         canUndo,
-        canRedo
+        canRedo,
+        pushHistory,
       }}
     >
       {children}

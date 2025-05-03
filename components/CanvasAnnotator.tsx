@@ -37,6 +37,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       selectedId,
       setSelectedId,
       activeColour,
+      pushHistory, // ✅ ADDED
     } = useAnnotation();
 
     const stageRef = useRef<any>(null);
@@ -82,6 +83,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     }, [selectedIds, currentLayers]);
 
     const updateLayerPoints = (id: number, points: number[]) => {
+      // ✅ Push current state before update
+      pushHistory(currentIndex, layers[currentIndex] || []);
       setLayers(prev => {
         const updated = [...(prev[currentIndex] || [])];
         const idx = updated.findIndex(l => l.id === id);
@@ -91,12 +94,15 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const updateLayer = (newLayer: Layer) => {
+      // ✅ Push current state before new layer
+      pushHistory(currentIndex, layers[currentIndex] || []);
       setLayers(prev => {
         const next = [...(prev[currentIndex] || []), newLayer];
         return { ...prev, [currentIndex]: next };
       });
     };
 
+    // ⬇️ All remaining code is unchanged
     const handleSelect = (e: any) => {
       if (previewOnly || activeTool !== 'select') return;
       const idStr = e.target.id();

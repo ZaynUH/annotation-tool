@@ -62,7 +62,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       getStage: () => stageRef.current,
     }));
 
-    // Attach transformer
     useEffect(() => {
       const transformer = transformerRef.current;
       if (!transformer || selectedId == null) return;
@@ -170,15 +169,52 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       setStartPoint(null);
     };
 
+    const handleDragMove = (e: any) => {
+      const shape = e.target;
+      const { width, height } = stageRef.current.size();
+
+      const box = shape.getClientRect();
+      const absPos = shape.absolutePosition();
+
+      const newX = Math.max(0, Math.min(absPos.x, width - box.width));
+      const newY = Math.max(0, Math.min(absPos.y, height - box.height));
+
+      shape.absolutePosition({ x: newX, y: newY });
+    };
+
+    const handleDragEnd = (e: any) => {
+      const node = e.target;
+      const id = Number(node.id().replace('layer-', ''));
+      const shape = currentLayers.find((l) => l.id === id);
+      if (!shape) return;
+
+      const absX = node.absolutePosition().x;
+      const absY = node.absolutePosition().y;
+
+      if (shape.type === 'rectangle') {
+        const [, , width, height] = shape.points;
+        updateLayerPoints(id, [absX, absY, width, height]);
+      } else if (shape.type === 'circle') {
+        const [, , radius] = shape.points;
+        updateLayerPoints(id, [absX, absY, radius]);
+      } else if (shape.type === 'line' || shape.type === 'arrow') {
+        const dx = node.x();
+        const dy = node.y();
+        const [x1, y1, x2, y2] = shape.points;
+        updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
+      }
+
+      node.position({ x: 0, y: 0 });
+    };
+
     const handleTransformEnd = (e: any) => {
       const node = e.target;
       const id = Number(node.id().replace('layer-', ''));
       const layer = currentLayers.find((l) => l.id === id);
       if (!layer) return;
-    
-      const rotation = node.rotation(); // optionally store rotation
-      node.rotation(0); // reset rotation to avoid double application later
-    
+
+      node.rotation(0); // optional
+
       if (layer.type === 'rectangle') {
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
@@ -194,33 +230,9 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         const newR = node.radius() * scaleX;
         updateLayerPoints(id, [x, y, newR]);
       }
-    
+
       node.scale({ x: 1, y: 1 });
       node.position({ x: 0, y: 0 });
-    };
-    
-
-    const handleDragEnd = (e: any) => {
-      const node = e.target;
-      const id = Number(node.id().replace('layer-', ''));
-      const shape = currentLayers.find((l) => l.id === id);
-      if (!shape) return;
-    
-      const dx = node.x();
-      const dy = node.y();
-    
-      if (shape.type === 'rectangle') {
-        const [x, y, w, h] = shape.points;
-        updateLayerPoints(id, [x + dx, y + dy, w, h]);
-      } else if (shape.type === 'circle') {
-        const [x, y, r] = shape.points;
-        updateLayerPoints(id, [x + dx, y + dy, r]);
-      } else if (shape.type === 'line' || shape.type === 'arrow') {
-        const [x1, y1, x2, y2] = shape.points;
-        updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
-      }
-    
-      node.position({ x: 0, y: 0 }); // <- important
     };
 
     return (
@@ -257,6 +269,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
               stroke: layer.colour,
               strokeWidth: 2,
               draggable: activeTool === 'select',
+              onDragMove: handleDragMove,
               onDragEnd: handleDragEnd,
               onTransformEnd: handleTransformEnd,
               onClick: () => setSelectedId(layer.id),

@@ -32,7 +32,7 @@ export default function ToolsPanel({
   return (
     <div className={styles.toolsWrapper}>
       <div className={styles.tools}>
-        {tools.map(tool => (
+        {tools.map((tool) => (
           <button
             key={tool}
             className={`${styles.toolButton} ${selectedTool === tool ? styles.activeTool : ''}`}
@@ -50,22 +50,29 @@ export default function ToolsPanel({
           title="Pick Colour"
         />
 
-        <label style={{ marginLeft: 8 }}>
+        <label className={styles.label}>
           Size
           <input
             type="number"
             min={1}
-            max={72}
+            max={100}
             value={fontSize}
             onChange={(e) => setFontSize(Number(e.target.value))}
             className={styles.strokeInput}
-            style={{ width: 60, marginLeft: 4 }}
+            title="Stroke width or font size"
           />
         </label>
 
-        <button className={styles.toolButton} onClick={onUndo} disabled={!canUndo}>Undo</button>
-        <button className={styles.toolButton} onClick={onRedo} disabled={!canRedo}>Redo</button>
-        <button className={styles.toolButton} onClick={onSave}>Save</button>
+        <button className={styles.toolButton} onClick={onUndo} disabled={!canUndo}>
+          Undo
+        </button>
+        <button className={styles.toolButton} onClick={onRedo} disabled={!canRedo}>
+          Redo
+        </button>
+
+        <button className={styles.toolButton} onClick={onSave}>
+          Save
+        </button>
       </div>
     </div>
   );

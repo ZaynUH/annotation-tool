@@ -19,6 +19,7 @@ import {
 } from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
+import styles from '../styles/TextInput.module.css'; // path to your CSS
 
 interface CanvasAnnotatorProps {
   imageUrl: string;
@@ -44,6 +45,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const isCtrlPressedRef = useRef(false);
 
     const [bgImage] = useImage(imageUrl);
@@ -51,6 +53,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [draftLayer, setDraftLayer] = useState<Layer | null>(null);
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [editingTextId, setEditingTextId] = useState<number | null>(null);
+    const [textInputValue, setTextInputValue] = useState('');
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
@@ -78,7 +82,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const transformable = nodes.filter(node => {
         const id = Number(node.id().replace('layer-', ''));
         const l = currentLayers.find(l => l.id === id);
-        return l && !['line', 'arrow'].includes(l.type);
+        return l && !['line', 'arrow', 'text'].includes(l.type);
       });
       transformerRef.current.nodes(transformable);
       transformerRef.current.getLayer()?.batchDraw();
@@ -127,12 +131,16 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         setIsDrawing(true);
         updateLayer({ ...base, points: [pos.x, pos.y] });
       } else if (activeTool === 'text') {
-        updateLayer({
+        const newLayer: Layer = {
           ...base,
+          id,
           points: [pos.x, pos.y],
           text: 'Text',
           fontSize,
-        });
+        };
+        updateLayer(newLayer);
+        setEditingTextId(id);
+        setTextInputValue('');
       } else {
         setDraftLayer({ ...base, points: [] });
       }
@@ -142,8 +150,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       if (!startPoint) return;
       const pos = e.target.getStage().getPointerPosition();
       if (!pos) return;
-      const type = activeTool;
-      if (type === 'pen' && isDrawing) {
+      if (activeTool === 'pen' && isDrawing) {
         setLayers(prev => {
           const updated = [...(prev[currentIndex] || [])];
           const last = updated[updated.length - 1];
@@ -153,20 +160,20 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         });
       } else {
         let points: number[] = [];
-        if (type === 'line' || type === 'arrow') {
+        if (activeTool === 'line' || activeTool === 'arrow') {
           points = [startPoint.x, startPoint.y, pos.x, pos.y];
-        } else if (type === 'rectangle') {
+        } else if (activeTool === 'rectangle') {
           const x = Math.min(startPoint.x, pos.x);
           const y = Math.min(startPoint.y, pos.y);
           const w = Math.abs(pos.x - startPoint.x);
           const h = Math.abs(pos.y - startPoint.y);
           points = [x, y, w, h];
-        } else if (type === 'circle' || type === 'ellipse') {
+        } else if (activeTool === 'circle' || activeTool === 'ellipse') {
           const rx = Math.abs(pos.x - startPoint.x);
           const ry = Math.abs(pos.y - startPoint.y);
           points = [startPoint.x, startPoint.y, rx, ry];
         }
-        setDraftLayer({ id: -1, type: type as Layer['type'], colour: activeColour, points });
+        setDraftLayer({ id: -1, type: activeTool as Layer['type'], colour: activeColour, points });
       }
     };
 
@@ -192,17 +199,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
       let newPoints = [...shape.points];
 
-      if (shape.type === 'rectangle') {
-        const [, , w, h] = shape.points;
-        newPoints = [clampedX, clampedY, w, h];
-      } else if (shape.type === 'circle') {
-        const [, , r] = shape.points;
-        newPoints = [clampedX, clampedY, r];
-      } else if (shape.type === 'ellipse') {
-        const [, , rx, ry] = shape.points;
-        newPoints = [clampedX, clampedY, rx, ry];
-      } else if (shape.type === 'text') {
-        newPoints = [clampedX, clampedY];
+      if (['rectangle', 'circle', 'ellipse', 'text'].includes(shape.type)) {
+        newPoints = [clampedX, clampedY, ...shape.points.slice(2)];
       } else {
         const dx = node.x(), dy = node.y();
         newPoints = shape.points.map((p, i) => p + (i % 2 === 0 ? dx : dy));
@@ -264,72 +262,117 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     return (
-      <Stage
-        width={width}
-        height={height}
-        ref={stageRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={endDrawing}
-        onClick={handleSelect}
-      >
-        <KonvaLayer>
-          {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />}
-          {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => {
-            const common = {
-              key: layer.id,
-              id: `layer-${layer.id}`,
-              stroke: layer.colour,
-              strokeWidth: layer.fontSize || 2,
-              draggable: activeTool === 'select',
-              onDragEnd: handleDragEnd,
-              onTransformEnd: handleTransformEnd,
-              onClick: handleSelect,
-              onTap: handleSelect,
-              fill: ['rectangle', 'circle', 'ellipse', 'text'].includes(layer.type) ? 'transparent' : undefined,
-            };
+      <div ref={containerRef} style={{ position: 'relative' }}>
+        <Stage
+          width={width}
+          height={height}
+          ref={stageRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={endDrawing}
+          onClick={handleSelect}
+        >
+          <KonvaLayer>
+            {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />}
+            {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => {
+              const common = {
+                key: layer.id,
+                id: `layer-${layer.id}`,
+                stroke: layer.colour,
+                strokeWidth: layer.fontSize || 2,
+                draggable: activeTool === 'select',
+                onDragEnd: handleDragEnd,
+                onTransformEnd: handleTransformEnd,
+                onClick: handleSelect,
+                onTap: handleSelect,
+                fill: ['rectangle', 'circle', 'ellipse', 'text'].includes(layer.type) ? 'transparent' : undefined,
+              };
 
-            switch (layer.type) {
-              case 'pen':
-                return <Line {...common} points={layer.points} lineCap="round" />;
-              case 'line':
-                return (
-                  <>
-                    <Line {...common} points={layer.points} hitStrokeWidth={20} />
-                    {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
-                  </>
-                );
-              case 'arrow':
-                return (
-                  <>
-                    <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />
-                    {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
-                  </>
-                );
-              case 'rectangle':
-                return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
-              case 'circle':
-                return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[2]} />;
-              case 'ellipse':
-                return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
-              case 'text':
-                return <Text {...common} x={layer.points[0]} y={layer.points[1]} text={layer.text || 'Text'} fontSize={layer.fontSize || 18} />;
-              default:
-                return null;
-            }
-          })}
-          <Transformer
-            ref={transformerRef}
-            boundBoxFunc={(oldBox, newBox) => {
-              if (isCtrlPressedRef.current) {
-                const aspect = oldBox.width / oldBox.height;
-                newBox.height = newBox.width / aspect;
+              switch (layer.type) {
+                case 'pen':
+                  return <Line {...common} points={layer.points} lineCap="round" />;
+                case 'line':
+                  return (
+                    <>
+                      <Line {...common} points={layer.points} hitStrokeWidth={20} />
+                      {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
+                    </>
+                  );
+                case 'arrow':
+                  return (
+                    <>
+                      <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />
+                      {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
+                    </>
+                  );
+                case 'rectangle':
+                  return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
+                case 'circle':
+                  return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[2]} />;
+                case 'ellipse':
+                  return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
+                case 'text':
+                  return <Text {...common} x={layer.points[0]} y={layer.points[1]} text={layer.text || 'Text'} fontSize={layer.fontSize || 18} />;
+                default:
+                  return null;
               }
-              return newBox;
-            }}
-          />
-        </KonvaLayer>
-      </Stage>
+            })}
+            <Transformer
+              ref={transformerRef}
+              boundBoxFunc={(oldBox, newBox) => {
+                if (isCtrlPressedRef.current) {
+                  const aspect = oldBox.width / oldBox.height;
+                  newBox.height = newBox.width / aspect;
+                }
+                return newBox;
+              }}
+            />
+          </KonvaLayer>
+        </Stage>
+
+        {editingTextId !== null && (() => {
+          const layer = currentLayers.find(l => l.id === editingTextId);
+          if (!layer) return null;
+
+          const stage = stageRef.current;
+          const container = containerRef.current;
+          if (!stage || !container) return null;
+
+          const { x, y } = layer.points.length >= 2 ? { x: layer.points[0], y: layer.points[1] } : { x: 0, y: 0 };
+          const stageBox = stage.container().getBoundingClientRect();
+
+          return (
+            <input
+              className={styles.textInput}
+              style={{
+                top: stageBox.top + y,
+                left: stageBox.left + x,
+                position: 'absolute',
+              }}
+              value={textInputValue}
+              placeholder="Type text..."
+              autoFocus
+              onChange={(e) => setTextInputValue(e.target.value)}
+              onBlur={() => {
+                setLayers(prev => {
+                  const updated = [...(prev[currentIndex] || [])];
+                  const idx = updated.findIndex(l => l.id === editingTextId);
+                  if (idx !== -1) {
+                    updated[idx] = { ...updated[idx], text: textInputValue || 'Text' };
+                  }
+                  return { ...prev, [currentIndex]: updated };
+                });
+                setEditingTextId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+          );
+        })()}
+      </div>
     );
   }
 );

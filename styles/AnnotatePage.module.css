@@ -177,6 +177,35 @@
   border: 2px solid #3b82f6;
 }
 
+.textInput {
+  position: absolute;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  padding: 4px 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  outline: none;
+  z-index: 10;
+  background: white;
+}
+.label {
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #111827;
+  font-size: 14px;
+}
+
+.strokeInput {
+  width: 60px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+
+
 
 
 

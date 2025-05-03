@@ -147,7 +147,7 @@ export default function ExportPage() {
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <Toolbar />
 
-        <div className={styles.importSection}>
+        <div className={styles.section}>
           <input
             className={styles.deckInput}
             type="text"

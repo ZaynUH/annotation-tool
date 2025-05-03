@@ -71,48 +71,49 @@ export default function AnnotatePage() {
   useEffect(() => {
     const loadFromDB = async () => {
       if (!user || !currentDeck.current) return;
-
-      const imageUrl = images[currentIndex];
-      if (!imageUrl || loadedImageIds.has(imageUrl)) return;
-
-      const storageFilePath = imageUrl.split('/').pop(); // Get just filename
-
+    
+      const fullImageUrl = images[currentIndex];
+      if (!fullImageUrl || loadedImageIds.has(fullImageUrl)) return;
+    
+      const storageFilePath = fullImageUrl.split('/').pop(); // 🔥 Correct path used in DB query
+    
       const { data: imageData, error } = await supabase
         .from('images')
         .select('id')
         .eq('deck_id', currentDeck.current.id)
         .eq('image_url', storageFilePath)
         .single();
-
+    
       if (error || !imageData) {
         console.warn('Image not found in DB:', error);
         return;
       }
-
+    
       const { data: layerData, error: layerError } = await supabase
         .from('layers')
         .select('*')
         .eq('image_id', imageData.id);
-
+    
       if (layerError) {
         console.warn('Could not fetch layers:', layerError);
         return;
       }
-
+    
       const parsed = layerData.map((layer) => ({
         id: Date.now() + Math.random(),
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
       }));
-
+    
       setLayers((prev) => ({
         ...prev,
         [currentIndex]: parsed,
       }));
-
-      setLoadedImageIds((prev) => new Set(prev).add(imageUrl));
+    
+      setLoadedImageIds((prev) => new Set(prev).add(fullImageUrl));
     };
+    
 
     loadFromDB();
   }, [user, currentIndex, images]);

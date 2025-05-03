@@ -192,24 +192,29 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const handleDragEnd = (e: any) => {
-      const id = Number(e.target.id().replace('layer-', ''));
+      const node = e.target;
+      const id = Number(node.id().replace('layer-', ''));
       const shape = currentLayers.find((l) => l.id === id);
       if (!shape) return;
-
-      const node = e.target;
-
+    
+      const dx = node.x();
+      const dy = node.y();
+    
       if (shape.type === 'rectangle') {
-        updateLayerPoints(id, [node.x(), node.y(), shape.points[2], shape.points[3]]);
+        const [x, y, w, h] = shape.points;
+        updateLayerPoints(id, [x + dx, y + dy, w, h]);
       } else if (shape.type === 'circle') {
-        updateLayerPoints(id, [node.x(), node.y(), shape.points[2]]);
+        const [x, y, r] = shape.points;
+        updateLayerPoints(id, [x + dx, y + dy, r]);
       } else if (shape.type === 'line' || shape.type === 'arrow') {
-        const dx = node.x();
-        const dy = node.y();
         const [x1, y1, x2, y2] = shape.points;
         updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
-        node.position({ x: 0, y: 0 });
       }
+    
+      // Reset position to avoid additive drift
+      node.position({ x: 0, y: 0 });
     };
+    
 
     return (
       <Stage

@@ -30,8 +30,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
   (
     {
       imageUrl,
-      width = 300,
-      height = 400,
+      width = 450,
+      height = 600,
       previewOnly = false,
       layers: previewLayers = [],
     },

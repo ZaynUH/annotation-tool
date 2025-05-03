@@ -1,36 +1,25 @@
 .page {
+  background-color: #e5e7eb;
   min-height: 100vh;
-  padding: 2rem;
-  background-color: #f0f0f0; /* page background */
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  overflow: hidden;
+  padding: 2rem;
 }
 
 .card {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   width: 100%;
   max-width: 1400px;
-  background-color: #f8f8f8; /* card background */
-  border: 1px solid #d1d1d1;
-  border-radius: 6px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-/* === Header === */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
 }
 
 .title {
+  padding: 1rem;
   font-size: 1.25rem;
   font-weight: 500;
-  margin: 0;
   color: black;
 }
 

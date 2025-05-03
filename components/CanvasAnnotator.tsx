@@ -28,16 +28,7 @@ interface CanvasAnnotatorProps {
 }
 
 const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
-  (
-    {
-      imageUrl,
-      width = 450,
-      height = 600,
-      previewOnly = false,
-      layers: previewLayers = [],
-    },
-    ref
-  ) => {
+  ({ imageUrl, width = 450, height = 600, previewOnly = false, layers: previewLayers = [] }, ref) => {
     const {
       currentIndex,
       layers,
@@ -45,26 +36,25 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       activeTool,
       selectedId,
       setSelectedId,
+      activeColour,
     } = useAnnotation();
 
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const isCtrlPressedRef = useRef(false);
-
-    const currentLayers = previewOnly
-      ? previewLayers
-      : layers[currentIndex] || [];
+    const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
-    const [bgImage] = useImage(imageUrl);
+    const isCtrlPressedRef = useRef(false);
 
+    const [bgImage] = useImage(imageUrl);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [draftLayer, setDraftLayer] = useState<Layer | null>(null);
+    const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
     }));
 
-    // Track ctrl key state
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         if (e.key === 'Control') isCtrlPressedRef.current = true;
@@ -80,7 +70,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       };
     }, []);
 
-    // Update transformer nodes
     useEffect(() => {
       if (!transformerRef.current) return;
       const nodes = selectedIds
@@ -101,7 +90,16 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       });
     };
 
+    const updateLayer = (newLayer: Layer) => {
+      setLayers((prev) => {
+        const updated = [...(prev[currentIndex] || []), newLayer];
+        return { ...prev, [currentIndex]: updated };
+      });
+    };
+
     const handleSelect = (e: any) => {
+      if (previewOnly || activeTool !== 'select') return;
+
       const idStr = e.target.id();
       const isMeta = e.evt.ctrlKey || e.evt.metaKey;
 
@@ -121,45 +119,68 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       }
     };
 
-    const updateLayer = (newLayer: Layer) => {
-      setLayers((prev) => {
-        const updated = [...(prev[currentIndex] || []), newLayer];
-        return { ...prev, [currentIndex]: updated };
-      });
-    };
-
     const startDrawing = (e: any) => {
-      if (previewOnly || activeTool !== 'pen') return;
+      if (previewOnly || activeTool === 'select') return;
+
       const pos = e.target.getStage().getPointerPosition();
       if (!pos) return;
+      setStartPoint(pos);
 
-      updateLayer({
-        id: Date.now(),
-        type: 'pen',
-        colour: '#000000',
-        points: [pos.x, pos.y],
-      });
-      setIsDrawing(true);
+      const id = Date.now();
+      const base = {
+        id,
+        type: activeTool as Layer['type'],
+        colour: activeColour,
+      };
+
+      if (activeTool === 'pen') {
+        setIsDrawing(true);
+        updateLayer({ ...base, points: [pos.x, pos.y] });
+      } else {
+        setDraftLayer({ ...base, points: [] });
+      }
     };
 
     const draw = (e: any) => {
-      if (!isDrawing || activeTool !== 'pen') return;
-      const point = e.target.getStage().getPointerPosition();
-      if (!point) return;
+      if (!startPoint) return;
+      const pos = e.target.getStage().getPointerPosition();
+      if (!pos) return;
 
-      const updated = [...currentLayers];
-      const last = { ...updated[updated.length - 1] };
-      last.points.push(point.x, point.y);
-      updated[updated.length - 1] = last;
-
-      setLayers((prev) => ({
-        ...prev,
-        [currentIndex]: updated,
-      }));
+      if (activeTool === 'pen' && isDrawing) {
+        setLayers((prev) => {
+          const updated = [...(prev[currentIndex] || [])];
+          const last = updated[updated.length - 1];
+          last.points.push(pos.x, pos.y);
+          updated[updated.length - 1] = last;
+          return { ...prev, [currentIndex]: updated };
+        });
+      } else if (
+        ['rectangle', 'circle', 'line', 'arrow'].includes(activeTool)
+      ) {
+        let points: number[] = [];
+        if (activeTool === 'line' || activeTool === 'arrow') {
+          points = [startPoint.x, startPoint.y, pos.x, pos.y];
+        } else if (activeTool === 'rectangle') {
+          const x = Math.min(startPoint.x, pos.x);
+          const y = Math.min(startPoint.y, pos.y);
+          const w = Math.abs(pos.x - startPoint.x);
+          const h = Math.abs(pos.y - startPoint.y);
+          points = [x, y, w, h];
+        } else if (activeTool === 'circle') {
+          const r = Math.hypot(pos.x - startPoint.x, pos.y - startPoint.y);
+          points = [startPoint.x, startPoint.y, r];
+        }
+        setDraftLayer({ id: -1, type: activeTool as Layer['type'], colour: activeColour, points });
+      }
     };
 
     const endDrawing = () => {
-      if (activeTool === 'pen') setIsDrawing(false);
+      if (draftLayer) {
+        updateLayer({ ...draftLayer, id: Date.now() });
+        setDraftLayer(null);
+      }
+      setIsDrawing(false);
+      setStartPoint(null);
     };
 
     const handleDragEnd = (e: any) => {
@@ -168,15 +189,14 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const shape = currentLayers.find((l) => l.id === id);
       if (!shape) return;
 
-      const absX = node.absolutePosition().x;
-      const absY = node.absolutePosition().y;
+      const { x, y } = node.position();
 
       if (shape.type === 'rectangle') {
         const [, , w, h] = shape.points;
-        updateLayerPoints(id, [absX, absY, w, h]);
+        updateLayerPoints(id, [x, y, w, h]);
       } else if (shape.type === 'circle') {
         const [, , r] = shape.points;
-        updateLayerPoints(id, [absX, absY, r]);
+        updateLayerPoints(id, [x, y, r]);
       } else if (shape.type === 'line' || shape.type === 'arrow') {
         const dx = node.x();
         const dy = node.y();
@@ -191,36 +211,23 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const transformer = transformerRef.current;
       transformer.getNodes().forEach((node: any) => {
         const id = Number(node.id().replace('layer-', ''));
-        const layer = currentLayers.find((l) => l.id === id);
-        if (!layer) return;
+        const shape = currentLayers.find((l) => l.id === id);
+        if (!shape) return;
 
-        if (layer.type === 'rectangle') {
+        if (shape.type === 'rectangle') {
           const scaleX = node.scaleX();
           const scaleY = node.scaleY();
           const w = node.width() * scaleX;
           const h = node.height() * scaleY;
           updateLayerPoints(id, [node.x(), node.y(), w, h]);
-        } else if (layer.type === 'circle') {
-          const scaleX = node.scaleX();
-          const r = node.radius() * scaleX;
+        } else if (shape.type === 'circle') {
+          const scale = node.scaleX();
+          const r = node.radius() * scale;
           updateLayerPoints(id, [node.x(), node.y(), r]);
         }
 
         node.scale({ x: 1, y: 1 });
-        node.position({ x: 0, y: 0 });
       });
-    };
-
-    const handleDragMove = (e: any) => {
-      const shape = e.target;
-      const { width, height } = stageRef.current.size();
-      const box = shape.getClientRect();
-      const absPos = shape.absolutePosition();
-
-      const newX = Math.max(0, Math.min(absPos.x, width - box.width));
-      const newY = Math.max(0, Math.min(absPos.y, height - box.height));
-
-      shape.absolutePosition({ x: newX, y: newY });
     };
 
     return (
@@ -235,57 +242,34 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       >
         <KonvaLayer>
           {bgImage && (
-            <KonvaImage
-              image={bgImage}
-              width={width}
-              height={height}
-              listening={false}
-            />
+            <KonvaImage image={bgImage} width={width} height={height} listening={false} />
           )}
 
-          {currentLayers.map((layer) => {
+          {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map((layer) => {
             const common = {
+              key: layer.id,
               id: `layer-${layer.id}`,
               stroke: layer.colour,
               strokeWidth: 2,
               draggable: activeTool === 'select',
-              onDragMove: handleDragMove,
               onDragEnd: handleDragEnd,
               onTransformEnd: handleTransformEnd,
               onClick: handleSelect,
               onTap: handleSelect,
+              fill: layer.type === 'rectangle' || layer.type === 'circle' ? 'transparent' : undefined,
             };
 
             switch (layer.type) {
               case 'pen':
-                return <Line key={layer.id} points={layer.points} lineCap="round" {...common} />;
+                return <Line {...common} points={layer.points} lineCap="round" />;
               case 'line':
-                return <Line key={layer.id} points={layer.points} hitStrokeWidth={20} {...common} />;
+                return <Line {...common} points={layer.points} hitStrokeWidth={20} />;
               case 'arrow':
-                return <Arrow key={layer.id} points={layer.points} fill={layer.colour} hitStrokeWidth={20} {...common} />;
+                return <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />;
               case 'rectangle':
-                return (
-                  <Rect
-                    key={layer.id}
-                    x={layer.points[0]}
-                    y={layer.points[1]}
-                    width={layer.points[2]}
-                    height={layer.points[3]}
-                    fill="transparent"
-                    {...common}
-                  />
-                );
+                return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
               case 'circle':
-                return (
-                  <Circle
-                    key={layer.id}
-                    x={layer.points[0]}
-                    y={layer.points[1]}
-                    radius={layer.points[2]}
-                    fill="transparent"
-                    {...common}
-                  />
-                );
+                return <Circle {...common} x={layer.points[0]} y={layer.points[1]} radius={layer.points[2]} />;
               default:
                 return null;
             }
@@ -295,8 +279,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
             ref={transformerRef}
             boundBoxFunc={(oldBox, newBox) => {
               if (isCtrlPressedRef.current) {
-                const aspectRatio = oldBox.width / oldBox.height;
-                newBox.height = newBox.width / aspectRatio;
+                const aspect = oldBox.width / oldBox.height;
+                newBox.height = newBox.width / aspect;
               }
               return newBox;
             }}

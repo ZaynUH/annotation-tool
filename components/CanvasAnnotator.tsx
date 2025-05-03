@@ -77,6 +77,17 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         .filter(Boolean);
       transformerRef.current.nodes(nodes);
       transformerRef.current.getLayer()?.batchDraw();
+
+      // limit anchor points for line/arrow
+      if (nodes.length === 1) {
+        const node = nodes[0];
+        const layer = currentLayers.find(l => `layer-${l.id}` === node.id());
+        if (layer && (layer.type === 'line' || layer.type === 'arrow')) {
+          transformerRef.current.enabledAnchors(['start', 'end']);
+        } else {
+          transformerRef.current.enabledAnchors(undefined);
+        }
+      }
     }, [selectedIds, currentLayers]);
 
     const updateLayerPoints = (id: number, newPoints: number[]) => {
@@ -189,44 +200,58 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const shape = currentLayers.find((l) => l.id === id);
       if (!shape) return;
 
-      const { x, y } = node.position();
+      const abs = node.absolutePosition();
+      const { width, height } = stageRef.current.size();
+      const clampedX = Math.max(0, Math.min(abs.x, width));
+      const clampedY = Math.max(0, Math.min(abs.y, height));
 
       if (shape.type === 'rectangle') {
         const [, , w, h] = shape.points;
-        updateLayerPoints(id, [x, y, w, h]);
+        updateLayerPoints(id, [clampedX, clampedY, w, h]);
       } else if (shape.type === 'circle') {
         const [, , r] = shape.points;
-        updateLayerPoints(id, [x, y, r]);
+        updateLayerPoints(id, [clampedX, clampedY, r]);
       } else if (shape.type === 'line' || shape.type === 'arrow') {
         const dx = node.x();
         const dy = node.y();
         const [x1, y1, x2, y2] = shape.points;
         updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
+      } else if (shape.type === 'pen') {
+        const dx = node.x();
+        const dy = node.y();
+        const newPoints = shape.points.map((p, i) => (i % 2 === 0 ? p + dx : p + dy));
+        updateLayerPoints(id, newPoints);
       }
 
       node.position({ x: 0, y: 0 });
     };
 
     const handleTransformEnd = () => {
-      const transformer = transformerRef.current;
-      transformer.getNodes().forEach((node: any) => {
+      transformerRef.current.getNodes().forEach((node: any) => {
         const id = Number(node.id().replace('layer-', ''));
         const shape = currentLayers.find((l) => l.id === id);
         if (!shape) return;
 
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+        const x = node.x();
+        const y = node.y();
+
         if (shape.type === 'rectangle') {
-          const scaleX = node.scaleX();
-          const scaleY = node.scaleY();
-          const w = node.width() * scaleX;
-          const h = node.height() * scaleY;
-          updateLayerPoints(id, [node.x(), node.y(), w, h]);
+          updateLayerPoints(id, [x, y, node.width() * scaleX, node.height() * scaleY]);
         } else if (shape.type === 'circle') {
-          const scale = node.scaleX();
-          const r = node.radius() * scale;
-          updateLayerPoints(id, [node.x(), node.y(), r]);
+          updateLayerPoints(id, [x, y, node.radius() * scaleX]);
+        } else if (shape.type === 'pen') {
+          const newPoints = shape.points.map((p, i) => {
+            return i % 2 === 0
+              ? (p - shape.points[0]) * scaleX + x
+              : (p - shape.points[1]) * scaleY + y;
+          });
+          updateLayerPoints(id, newPoints);
         }
 
         node.scale({ x: 1, y: 1 });
+        node.position({ x: 0, y: 0 });
       });
     };
 
@@ -256,12 +281,12 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
               onTransformEnd: handleTransformEnd,
               onClick: handleSelect,
               onTap: handleSelect,
-              fill: layer.type === 'rectangle' || layer.type === 'circle' ? 'transparent' : undefined,
+              fill: ['rectangle', 'circle'].includes(layer.type) ? 'transparent' : undefined,
             };
 
             switch (layer.type) {
               case 'pen':
-                return <Line {...common} points={layer.points} lineCap="round" />;
+                return <Line {...common} points={layer.points} lineCap="round" closed={false} />;
               case 'line':
                 return <Line {...common} points={layer.points} hitStrokeWidth={20} />;
               case 'arrow':

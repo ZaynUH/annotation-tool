@@ -175,21 +175,30 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const id = Number(node.id().replace('layer-', ''));
       const layer = currentLayers.find((l) => l.id === id);
       if (!layer) return;
-
+    
+      const rotation = node.rotation(); // optionally store rotation
+      node.rotation(0); // reset rotation to avoid double application later
+    
       if (layer.type === 'rectangle') {
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
         const newW = node.width() * scaleX;
         const newH = node.height() * scaleY;
-        updateLayerPoints(id, [node.x(), node.y(), newW, newH]);
-        node.scale({ x: 1, y: 1 });
+        const x = node.x();
+        const y = node.y();
+        updateLayerPoints(id, [x, y, newW, newH]);
       } else if (layer.type === 'circle') {
         const scaleX = node.scaleX();
+        const x = node.x();
+        const y = node.y();
         const newR = node.radius() * scaleX;
-        updateLayerPoints(id, [node.x(), node.y(), newR]);
-        node.scale({ x: 1, y: 1 });
+        updateLayerPoints(id, [x, y, newR]);
       }
+    
+      node.scale({ x: 1, y: 1 });
+      node.position({ x: 0, y: 0 });
     };
+    
 
     const handleDragEnd = (e: any) => {
       const node = e.target;
@@ -211,8 +220,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
       }
     
+      node.position({ x: 0, y: 0 }); // <- important
     };
-    
 
     return (
       <Stage

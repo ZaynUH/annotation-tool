@@ -62,7 +62,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       getStage: () => stageRef.current,
     }));
 
-    // Attach transformer to selected shape
+    // Attach transformer
     useEffect(() => {
       const transformer = transformerRef.current;
       if (!transformer || selectedId == null) return;
@@ -72,28 +72,11 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       if (!node || !layerData) return;
 
       if (layerData.type === 'line' || layerData.type === 'arrow') {
-        transformer.nodes([]); // lines/arrows: no bounding box
+        transformer.nodes([]);
         return;
       }
 
       transformer.nodes([node]);
-      transformer.setAttrs({
-        rotateEnabled: true,
-        enabledAnchors: [
-          'top-left',
-          'top-right',
-          'bottom-left',
-          'bottom-right',
-          'top-center',
-          'bottom-center',
-          'middle-left',
-          'middle-right',
-        ],
-        anchorSize: 8,
-        anchorStroke: 'black',
-        anchorFill: 'white',
-        borderDash: [6, 4],
-      });
       transformer.getLayer().batchDraw();
     }, [selectedId, currentLayers]);
 
@@ -104,14 +87,20 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         if (idx !== -1) updated[idx] = { ...updated[idx], points: newPoints };
         return { ...prev, [currentIndex]: updated };
       });
+      requestAnimationFrame(() => {
+        stageRef.current?.batchDraw();
+      });
     };
 
     const updateLayer = (newLayer: Layer) => {
-      const updated = [...currentLayers, newLayer];
-      setLayers((prev) => ({
-        ...prev,
-        [currentIndex]: updated,
-      }));
+      const updated = [...(layers[currentIndex] || []), newLayer];
+      setLayers((prev) => {
+        const next = { ...prev, [currentIndex]: updated };
+        requestAnimationFrame(() => {
+          stageRef.current?.batchDraw();
+        });
+        return next;
+      });
     };
 
     const startDrawing = (e: any) => {
@@ -142,10 +131,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       last.points.push(point.x, point.y);
       updated[updated.length - 1] = last;
 
-      setLayers((prev) => ({
-        ...prev,
-        [currentIndex]: updated,
-      }));
+      setLayers((prev) => {
+        const next = { ...prev, [currentIndex]: updated };
+        requestAnimationFrame(() => {
+          stageRef.current?.batchDraw();
+        });
+        return next;
+      });
     };
 
     const endDrawing = (e: any) => {
@@ -153,14 +145,14 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         setIsDrawing(false);
         return;
       }
+
       if (!startPoint || activeTool === 'select') return;
 
       const end = e.target.getStage().getPointerPosition();
       if (!end) return;
 
       const id = Date.now();
-      const colour = activeColour;
-      const common = { id, type: activeTool as Layer['type'], colour };
+      const common = { id, type: activeTool as Layer['type'], colour: activeColour };
 
       if (activeTool === 'line' || activeTool === 'arrow') {
         updateLayer({ ...common, points: [startPoint.x, startPoint.y, end.x, end.y] });
@@ -262,13 +254,10 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
             switch (layer.type) {
               case 'pen':
                 return <Line key={layer.id} points={layer.points} lineCap="round" {...common} />;
-
               case 'line':
                 return <Line key={layer.id} points={layer.points} hitStrokeWidth={20} {...common} />;
-
               case 'arrow':
                 return <Arrow key={layer.id} points={layer.points} fill={layer.colour} hitStrokeWidth={20} {...common} />;
-
               case 'rectangle':
                 return (
                   <Rect
@@ -281,7 +270,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     {...common}
                   />
                 );
-
               case 'circle':
                 return (
                   <Circle
@@ -293,52 +281,12 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     {...common}
                   />
                 );
-
               default:
                 return null;
             }
           })}
 
-          {/* Transformer for rect/circle */}
           <Transformer ref={transformerRef} />
-
-          {/* Anchor points for line/arrow */}
-          {selectedId != null &&
-            (() => {
-              const sel = currentLayers.find((l) => l.id === selectedId);
-              if (!sel || (sel.type !== 'line' && sel.type !== 'arrow')) return null;
-              const [x1, y1, x2, y2] = sel.points;
-              return (
-                <>
-                  <Circle
-                    x={x1}
-                    y={y1}
-                    radius={6}
-                    fill="white"
-                    stroke="black"
-                    strokeWidth={1}
-                    draggable
-                    onDragMove={(e) => {
-                      const { x, y } = e.target.position();
-                      updateLayerPoints(selectedId, [x, y, sel.points[2], sel.points[3]]);
-                    }}
-                  />
-                  <Circle
-                    x={x2}
-                    y={y2}
-                    radius={6}
-                    fill="white"
-                    stroke="black"
-                    strokeWidth={1}
-                    draggable
-                    onDragMove={(e) => {
-                      const { x, y } = e.target.position();
-                      updateLayerPoints(selectedId, [sel.points[0], sel.points[1], x, y]);
-                    }}
-                  />
-                </>
-              );
-            })()}
         </KonvaLayer>
       </Stage>
     );

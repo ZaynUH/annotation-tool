@@ -19,7 +19,6 @@ import {
 } from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
-import styles from '../styles/TextInput.module.css'; // path to your CSS
 
 interface CanvasAnnotatorProps {
   imageUrl: string;
@@ -343,7 +342,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
           return (
             <input
-              className={styles.textInput}
               style={{
                 top: stageBox.top + y,
                 left: stageBox.left + x,

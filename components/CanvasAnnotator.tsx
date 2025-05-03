@@ -18,6 +18,7 @@ import {
   Text,
 } from 'react-konva';
 import useImage from 'use-image';
+import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
 
 interface CanvasAnnotatorProps {
@@ -53,7 +54,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [editingTextId, setEditingTextId] = useState<number | null>(null);
-    const [textInputValue, setTextInputValue] = useState('');
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
@@ -134,12 +134,10 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           ...base,
           id,
           points: [pos.x, pos.y],
-          text: 'Text',
+          text: 'Double-click to edit',
           fontSize,
         };
         updateLayer(newLayer);
-        setEditingTextId(id);
-        setTextInputValue('');
       } else {
         setDraftLayer({ ...base, points: [] });
       }
@@ -185,79 +183,70 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       setStartPoint(null);
     };
 
-    const handleDragEnd = (e: any) => {
-      const node = e.target;
-      const id = Number(node.id().replace('layer-', ''));
-      const shape = currentLayers.find(l => l.id === id);
-      if (!shape) return;
+    const handleTextDblClick = (layer: Layer) => {
+      const stage = stageRef.current;
+      const container = containerRef.current;
+      if (!stage || !container) return;
 
-      const absPos = node.absolutePosition();
-      const { width, height } = stageRef.current.size();
-      const clampedX = Math.max(0, Math.min(absPos.x, width));
-      const clampedY = Math.max(0, Math.min(absPos.y, height));
+      const [ x, y ] = layer.points;
+      const stageBox = stage.container().getBoundingClientRect();
 
-      let newPoints = [...shape.points];
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
 
-      if (['rectangle', 'circle', 'ellipse', 'text'].includes(shape.type)) {
-        newPoints = [clampedX, clampedY, ...shape.points.slice(2)];
-      } else {
-        const dx = node.x(), dy = node.y();
-        newPoints = shape.points.map((p, i) => p + (i % 2 === 0 ? dx : dy));
-      }
+      textarea.value = layer.text || '';
+      textarea.style.position = 'absolute';
+      textarea.style.top = `${stageBox.top + y}px`;
+      textarea.style.left = `${stageBox.left + x}px`;
+      textarea.style.fontSize = `${layer.fontSize || 18}px`;
+      textarea.style.background = 'none';
+      textarea.style.border = '1px solid gray';
+      textarea.style.outline = 'none';
+      textarea.style.resize = 'none';
+      textarea.style.overflow = 'hidden';
+      textarea.style.padding = '0';
+      textarea.style.margin = '0';
+      textarea.style.color = layer.colour;
+      textarea.style.fontFamily = 'inherit';
 
-      updateLayerPoints(id, newPoints);
-      node.position({ x: 0, y: 0 });
-    };
+      textarea.focus();
 
-    const handleTransformEnd = () => {
-      transformerRef.current.getNodes().forEach((node: any) => {
-        const id = Number(node.id().replace('layer-', ''));
-        const shape = currentLayers.find(l => l.id === id);
-        if (!shape) return;
-
-        const scaleX = node.scaleX();
-        const scaleY = node.scaleY();
-        const x = node.x(), y = node.y();
-
-        let newPoints = [...shape.points];
-
-        if (shape.type === 'rectangle') {
-          newPoints = [x, y, node.width() * scaleX, node.height() * scaleY];
-        } else if (shape.type === 'circle') {
-          newPoints = [x, y, node.radiusX() * scaleX];
-        } else if (shape.type === 'ellipse') {
-          newPoints = [x, y, node.radiusX() * scaleX, node.radiusY() * scaleY];
-        } else if (shape.type === 'pen') {
-          const box = node.getClientRect({ skipStroke: true });
-          const originX = box.x;
-          const originY = box.y;
-          newPoints = shape.points.map((p, i) =>
-            i % 2 === 0
-              ? ((p - originX) * scaleX + originX)
-              : ((p - originY) * scaleY + originY)
-          );
-        }
-
-        updateLayerPoints(id, newPoints);
-        node.scale({ x: 1, y: 1 });
-        node.position({ x: 0, y: 0 });
-      });
-    };
-
-    const renderAnchorsForLine = (layer: Layer) => {
-      const [x1, y1, x2, y2] = layer.points;
-      const updatePoint = (idx: number, x: number, y: number) => {
-        const updated = [...layer.points];
-        updated[idx] = x;
-        updated[idx + 1] = y;
-        updateLayerPoints(layer.id, updated);
+      const removeTextarea = () => {
+        document.body.removeChild(textarea);
+        setEditingTextId(null);
       };
-      return (
-        <>
-          <Circle x={x1} y={y1} radius={6} fill="white" stroke="black" draggable onDragMove={e => updatePoint(0, e.target.x(), e.target.y())} />
-          <Circle x={x2} y={y2} radius={6} fill="white" stroke="black" draggable onDragMove={e => updatePoint(2, e.target.x(), e.target.y())} />
-        </>
-      );
+
+      const handleOutsideClick = (e: MouseEvent) => {
+        if (e.target !== textarea) {
+          updateText(layer.id, textarea.value);
+          removeTextarea();
+        }
+      };
+
+      const updateText = (id: number, newText: string) => {
+        setLayers(prev => {
+          const updated = [...(prev[currentIndex] || [])];
+          const idx = updated.findIndex(l => l.id === id);
+          if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+          return { ...prev, [currentIndex]: updated };
+        });
+      };
+
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          updateText(layer.id, textarea.value);
+          removeTextarea();
+        }
+        if (e.key === 'Escape') {
+          removeTextarea();
+        }
+      });
+
+      setTimeout(() => {
+        window.addEventListener('click', handleOutsideClick);
+      });
+
+      setEditingTextId(layer.id);
     };
 
     return (
@@ -280,30 +269,19 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 stroke: layer.colour,
                 strokeWidth: layer.fontSize || 2,
                 draggable: activeTool === 'select',
-                onDragEnd: handleDragEnd,
-                onTransformEnd: handleTransformEnd,
+                onDragEnd: handleSelect,
+                onTransformEnd: handleSelect,
                 onClick: handleSelect,
                 onTap: handleSelect,
-                fill: ['rectangle', 'circle', 'ellipse', 'text'].includes(layer.type) ? 'transparent' : undefined,
               };
 
               switch (layer.type) {
                 case 'pen':
                   return <Line {...common} points={layer.points} lineCap="round" />;
                 case 'line':
-                  return (
-                    <>
-                      <Line {...common} points={layer.points} hitStrokeWidth={20} />
-                      {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
-                    </>
-                  );
+                  return <Line {...common} points={layer.points} hitStrokeWidth={20} />;
                 case 'arrow':
-                  return (
-                    <>
-                      <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />
-                      {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
-                    </>
-                  );
+                  return <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />;
                 case 'rectangle':
                   return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
                 case 'circle':
@@ -311,65 +289,23 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 case 'ellipse':
                   return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
                 case 'text':
-                  return <Text {...common} x={layer.points[0]} y={layer.points[1]} text={layer.text || 'Text'} fontSize={layer.fontSize || 18} />;
+                  return (
+                    <Text
+                      {...common}
+                      x={layer.points[0]}
+                      y={layer.points[1]}
+                      text={layer.text || ''}
+                      fontSize={layer.fontSize || 18}
+                      onDblClick={() => handleTextDblClick(layer)}
+                    />
+                  );
                 default:
                   return null;
               }
             })}
-            <Transformer
-              ref={transformerRef}
-              boundBoxFunc={(oldBox, newBox) => {
-                if (isCtrlPressedRef.current) {
-                  const aspect = oldBox.width / oldBox.height;
-                  newBox.height = newBox.width / aspect;
-                }
-                return newBox;
-              }}
-            />
+            <Transformer ref={transformerRef} />
           </KonvaLayer>
         </Stage>
-
-        {editingTextId !== null && (() => {
-          const layer = currentLayers.find(l => l.id === editingTextId);
-          if (!layer) return null;
-
-          const stage = stageRef.current;
-          const container = containerRef.current;
-          if (!stage || !container) return null;
-
-          const { x, y } = layer.points.length >= 2 ? { x: layer.points[0], y: layer.points[1] } : { x: 0, y: 0 };
-          const stageBox = stage.container().getBoundingClientRect();
-
-          return (
-            <input
-              style={{
-                top: stageBox.top + y,
-                left: stageBox.left + x,
-                position: 'absolute',
-              }}
-              value={textInputValue}
-              placeholder="Type text..."
-              autoFocus
-              onChange={(e) => setTextInputValue(e.target.value)}
-              onBlur={() => {
-                setLayers(prev => {
-                  const updated = [...(prev[currentIndex] || [])];
-                  const idx = updated.findIndex(l => l.id === editingTextId);
-                  if (idx !== -1) {
-                    updated[idx] = { ...updated[idx], text: textInputValue || 'Text' };
-                  }
-                  return { ...prev, [currentIndex]: updated };
-                });
-                setEditingTextId(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.currentTarget.blur();
-                }
-              }}
-            />
-          );
-        })()}
       </div>
     );
   }

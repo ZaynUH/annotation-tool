@@ -157,7 +157,7 @@ export default function ExportPage() {
           <div className={styles.decksGrid}>
             {deck && (
               <div className={styles.deck}>
-                <div className={styles.decksGrid}>
+                <div className={styles.deckRow}>
                   {deck.images.map((img, idx) => (
                     <div
                       key={idx}

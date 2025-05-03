@@ -28,9 +28,6 @@ export default function AnnotatePage() {
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
-  const BUCKET = 'images';
-  const PROJECT_URL = 'https://sflyeuxvdpndrwuofgqb.supabase.co';
-
   // Load deck and images
   useEffect(() => {
     const storedDeck = localStorage.getItem('currentDeck');
@@ -40,14 +37,7 @@ export default function AnnotatePage() {
       deckNameRef.current = parsed.name;
 
       if (parsed.images?.length) {
-        const imagePaths = parsed.images.map((path: string) => {
-          // Guests have local blob URLs; users have Supabase file names
-          return path.startsWith('blob:')
-            ? path
-            : `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${path}`;
-        });
-
-        setImages(imagePaths);
+        setImages(parsed.images);
         setCurrentIndex(0);
 
         if (!user) {
@@ -71,49 +61,49 @@ export default function AnnotatePage() {
   useEffect(() => {
     const loadFromDB = async () => {
       if (!user || !currentDeck.current) return;
-    
-      const fullImageUrl = images[currentIndex];
-      if (!fullImageUrl || loadedImageIds.has(fullImageUrl)) return;
-    
-      const storageFilePath = fullImageUrl.split('/').pop(); // 🔥 Correct path used in DB query
-    
+
+      const imageUrl = images[currentIndex];
+      if (!imageUrl || loadedImageIds.has(imageUrl)) return;
+
+      const fileName = imageUrl.split('/').pop(); // ✅ FIX: match only file name
+      console.log('Looking up image by file name:', fileName);
+
       const { data: imageData, error } = await supabase
         .from('images')
         .select('id')
         .eq('deck_id', currentDeck.current.id)
-        .eq('image_url', storageFilePath)
+        .eq('image_url', fileName)
         .single();
-    
+
       if (error || !imageData) {
         console.warn('Image not found in DB:', error);
         return;
       }
-    
+
       const { data: layerData, error: layerError } = await supabase
         .from('layers')
         .select('*')
         .eq('image_id', imageData.id);
-    
+
       if (layerError) {
         console.warn('Could not fetch layers:', layerError);
         return;
       }
-    
+
       const parsed = layerData.map((layer) => ({
-        id: Date.now() + Math.random(),
+        id: Date.now() + Math.random(), // Local unique id
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
       }));
-    
+
       setLayers((prev) => ({
         ...prev,
         [currentIndex]: parsed,
       }));
-    
-      setLoadedImageIds((prev) => new Set(prev).add(fullImageUrl));
+
+      setLoadedImageIds((prev) => new Set(prev).add(imageUrl));
     };
-    
 
     loadFromDB();
   }, [user, currentIndex, images]);
@@ -140,13 +130,13 @@ export default function AnnotatePage() {
 
     const imageUrl = images[currentIndex];
     const deckId = currentDeck.current?.id;
-    const storageFilePath = imageUrl.split('/').pop();
+    const fileName = imageUrl.split('/').pop(); // ✅ FIX here too
 
     const { data: imageData, error: fetchError } = await supabase
       .from('images')
       .select('id')
       .eq('deck_id', deckId)
-      .eq('image_url', storageFilePath)
+      .eq('image_url', fileName)
       .single();
 
     if (fetchError || !imageData) {

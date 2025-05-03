@@ -175,7 +175,7 @@ export default function ExportPage() {
           </div>
         </div>
 
-        <div className={styles.importSection}>
+        <div className={styles.section}>
           <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRow}>
             {selectedImages.map((img, idx) => (

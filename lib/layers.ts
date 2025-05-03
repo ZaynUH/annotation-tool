@@ -1,17 +1,18 @@
 import { supabase } from './supabase';
-import { Layer } from '../context/AnnotationContext';
 
-export async function saveLayersForImage(imageId: string, layers: Layer[]) {
-  // Clean up existing layers first
+export async function saveLayersForImage(imageId: string, layers: any[]) {
+  // Clean old layers
   const { error: deleteError } = await supabase
     .from('layers')
     .delete()
     .eq('image_id', imageId);
 
-  if (deleteError) return { error: deleteError };
+  if (deleteError) {
+    return { error: deleteError.message };
+  }
 
-  // Save new layers
-  const inserts = layers.map((layer) => ({
+  // Prepare new layers to insert
+  const layerInsert = layers.map((layer) => ({
     image_id: imageId,
     type: layer.type,
     colour: layer.colour,
@@ -20,7 +21,11 @@ export async function saveLayersForImage(imageId: string, layers: Layer[]) {
 
   const { error: insertError } = await supabase
     .from('layers')
-    .insert(inserts);
+    .insert(layerInsert);
 
-  return { error: insertError };
+  if (insertError) {
+    return { error: insertError.message };
+  }
+
+  return { success: true };
 }

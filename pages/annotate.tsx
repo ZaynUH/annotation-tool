@@ -20,7 +20,7 @@ export default function AnnotatePage() {
     activeTool,
     setActiveTool,
     activeColour,
-    setActiveColour
+    setActiveColour,
   } = useAnnotation();
 
   const { user } = useUser();
@@ -28,7 +28,6 @@ export default function AnnotatePage() {
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
-  // Load deck and images
   useEffect(() => {
     const storedDeck = localStorage.getItem('currentDeck');
     if (storedDeck) {
@@ -50,29 +49,23 @@ export default function AnnotatePage() {
     }
   }, [user]);
 
-  // Persist to localStorage only for guests
   useEffect(() => {
     if (deckNameRef.current && !user) {
       localStorage.setItem(`layers_${deckNameRef.current}`, JSON.stringify(layers));
     }
   }, [layers, user]);
 
-  // Load annotations from DB for current image if logged in
   useEffect(() => {
     const loadFromDB = async () => {
       if (!user || !currentDeck.current) return;
-
       const imageUrl = images[currentIndex];
       if (!imageUrl || loadedImageIds.has(imageUrl)) return;
-
-      const fileName = imageUrl.split('/').pop(); // ✅ FIX: match only file name
-      console.log('Looking up image by file name:', fileName);
 
       const { data: imageData, error } = await supabase
         .from('images')
         .select('id')
         .eq('deck_id', currentDeck.current.id)
-        .eq('image_url', fileName)
+        .eq('image_url', imageUrl)
         .single();
 
       if (error || !imageData) {
@@ -91,7 +84,7 @@ export default function AnnotatePage() {
       }
 
       const parsed = layerData.map((layer) => ({
-        id: Date.now() + Math.random(), // Local unique id
+        id: Date.now() + Math.random(),
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
@@ -130,13 +123,12 @@ export default function AnnotatePage() {
 
     const imageUrl = images[currentIndex];
     const deckId = currentDeck.current?.id;
-    const fileName = imageUrl.split('/').pop(); // ✅ FIX here too
 
     const { data: imageData, error: fetchError } = await supabase
       .from('images')
       .select('id')
       .eq('deck_id', deckId)
-      .eq('image_url', fileName)
+      .eq('image_url', imageUrl)
       .single();
 
     if (fetchError || !imageData) {

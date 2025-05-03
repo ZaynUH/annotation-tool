@@ -105,7 +105,7 @@ export default function UploadPage() {
           />
         </div>
 
-        <Toolbar />
+        <Toolbar disableTabs={{ annotate: true, export: true }} />
 
         <div className={styles.importSection}>
           <input

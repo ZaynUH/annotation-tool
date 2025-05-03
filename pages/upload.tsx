@@ -98,11 +98,23 @@ export default function UploadPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
-          <div
+          <div 
             className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
-            onClick={() => setShowModal(true)}
-            title={user ? `Logged in as ${user.email}` : 'Click to log in'}
-          />
+            onClick={async () => {
+              if (user) {
+                const confirmLogout = window.confirm('Are you sure you want to log out?');
+                if (confirmLogout) {
+                  await supabase.auth.signOut();
+                  localStorage.removeItem('currentDeck');
+                  router.reload(); // reload the page to update state
+                }
+              } else {
+                setShowModal(true);
+              }
+            }}
+          title={user ? `Logged in as ${user.email}` : 'Click to log in'}
+        />
+
         </div>
 
         <Toolbar disableTabs={{ annotate: true, export: true }} />

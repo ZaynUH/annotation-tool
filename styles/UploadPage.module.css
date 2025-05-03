@@ -1,9 +1,11 @@
 .page {
-  background-color: #e5e7eb;
   min-height: 100vh;
+  padding: 2rem;
+  background-color: #f0f0f0; /* page background */
   display: flex;
   justify-content: center;
-  padding: 2rem;
+  align-items: flex-start;
+  overflow: hidden;
 }
 
 .card {

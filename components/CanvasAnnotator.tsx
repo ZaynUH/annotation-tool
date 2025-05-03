@@ -17,6 +17,7 @@ import {
   Transformer,
   Text,
 } from 'react-konva';
+import { Html } from 'react-konva-utils';
 import useImage from 'use-image';
 import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
@@ -45,7 +46,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
     const isCtrlPressedRef = useRef(false);
 
     const [bgImage] = useImage(imageUrl);
@@ -54,6 +54,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [editingTextId, setEditingTextId] = useState<number | null>(null);
+    const [textEditValue, setTextEditValue] = useState<string>('');
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
@@ -184,73 +185,24 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const handleTextDblClick = (layer: Layer) => {
-      const stage = stageRef.current;
-      const container = containerRef.current;
-      if (!stage || !container) return;
+      setEditingTextId(layer.id);
+      setTextEditValue(layer.text || '');
+    };
 
-      const [ x, y ] = layer.points;
-      const stageBox = stage.container().getBoundingClientRect();
-
-      const textarea = document.createElement('textarea');
-      document.body.appendChild(textarea);
-
-      textarea.value = layer.text || '';
-      textarea.style.position = 'absolute';
-      textarea.style.top = `${stageBox.top + y}px`;
-      textarea.style.left = `${stageBox.left + x}px`;
-      textarea.style.fontSize = `${layer.fontSize || 18}px`;
-      textarea.style.background = 'none';
-      textarea.style.border = '1px solid gray';
-      textarea.style.outline = 'none';
-      textarea.style.resize = 'none';
-      textarea.style.overflow = 'hidden';
-      textarea.style.padding = '0';
-      textarea.style.margin = '0';
-      textarea.style.color = layer.colour;
-      textarea.style.fontFamily = 'inherit';
-
-      textarea.focus();
-
-      const removeTextarea = () => {
-        document.body.removeChild(textarea);
-        setEditingTextId(null);
-      };
-
-      const handleOutsideClick = (e: MouseEvent) => {
-        if (e.target !== textarea) {
-          updateText(layer.id, textarea.value);
-          removeTextarea();
-        }
-      };
-
-      const updateText = (id: number, newText: string) => {
+    const handleTextEditCommit = (value: string) => {
+      if (editingTextId !== null) {
         setLayers(prev => {
           const updated = [...(prev[currentIndex] || [])];
-          const idx = updated.findIndex(l => l.id === id);
-          if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+          const idx = updated.findIndex(l => l.id === editingTextId);
+          if (idx !== -1) updated[idx] = { ...updated[idx], text: value };
           return { ...prev, [currentIndex]: updated };
         });
-      };
-
-      textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          updateText(layer.id, textarea.value);
-          removeTextarea();
-        }
-        if (e.key === 'Escape') {
-          removeTextarea();
-        }
-      });
-
-      setTimeout(() => {
-        window.addEventListener('click', handleOutsideClick);
-      });
-
-      setEditingTextId(layer.id);
+      }
+      setEditingTextId(null);
     };
 
     return (
-      <div ref={containerRef} style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
         <Stage
           width={width}
           height={height}
@@ -262,6 +214,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         >
           <KonvaLayer>
             {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />}
+
             {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => {
               const common = {
                 key: layer.id,
@@ -269,40 +222,79 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 stroke: layer.colour,
                 strokeWidth: layer.fontSize || 2,
                 draggable: activeTool === 'select',
-                onDragEnd: handleSelect,
-                onTransformEnd: handleSelect,
+                onDragEnd: () => {},
+                onTransformEnd: () => {},
                 onClick: handleSelect,
                 onTap: handleSelect,
               };
+
+              if (layer.type === 'text') {
+                const [x, y] = layer.points;
+                return (
+                  <>
+                    <Text
+                      {...common}
+                      x={x}
+                      y={y}
+                      text={layer.text || ''}
+                      fontSize={layer.fontSize || 18}
+                      onDblClick={() => handleTextDblClick(layer)}
+                      visible={editingTextId !== layer.id}
+                    />
+                    {editingTextId === layer.id && (
+                      <Html>
+                        <textarea
+                          value={textEditValue}
+                          style={{
+                            position: 'absolute',
+                            top: y,
+                            left: x,
+                            fontSize: `${layer.fontSize || 18}px`,
+                            fontFamily: 'inherit',
+                            padding: 0,
+                            margin: 0,
+                            border: '1px solid #999',
+                            background: 'white',
+                            resize: 'none',
+                            outline: 'none',
+                            color: layer.colour,
+                          }}
+                          autoFocus
+                          onChange={(e) => setTextEditValue(e.target.value)}
+                          onBlur={() => handleTextEditCommit(textEditValue)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleTextEditCommit(textEditValue);
+                            } else if (e.key === 'Escape') {
+                              setEditingTextId(null);
+                            }
+                          }}
+                        />
+                      </Html>
+                    )}
+                  </>
+                );
+              }
 
               switch (layer.type) {
                 case 'pen':
                   return <Line {...common} points={layer.points} lineCap="round" />;
                 case 'line':
-                  return <Line {...common} points={layer.points} hitStrokeWidth={20} />;
+                  return <Line {...common} points={layer.points} />;
                 case 'arrow':
-                  return <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />;
+                  return <Arrow {...common} points={layer.points} fill={layer.colour} />;
                 case 'rectangle':
                   return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
                 case 'circle':
                   return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[2]} />;
                 case 'ellipse':
                   return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
-                case 'text':
-                  return (
-                    <Text
-                      {...common}
-                      x={layer.points[0]}
-                      y={layer.points[1]}
-                      text={layer.text || ''}
-                      fontSize={layer.fontSize || 18}
-                      onDblClick={() => handleTextDblClick(layer)}
-                    />
-                  );
                 default:
                   return null;
               }
             })}
+
             <Transformer ref={transformerRef} />
           </KonvaLayer>
         </Stage>

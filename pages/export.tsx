@@ -157,7 +157,6 @@ export default function ExportPage() {
           <div className={styles.decksGrid}>
             {deck && (
               <div className={styles.deck}>
-                <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div className={styles.deckRow}>
                   {deck.images.map((img, idx) => (
                     <div

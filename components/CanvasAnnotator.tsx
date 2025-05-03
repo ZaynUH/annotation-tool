@@ -30,6 +30,8 @@ interface CanvasAnnotatorProps {
   layers?: Layer[];
 }
 
+const containerRef = useRef<HTMLDivElement>(null);
+
 const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
   ({ imageUrl, width = 450, height = 600, previewOnly = false, layers: previewLayers = [] }, ref) => {
     const {
@@ -185,9 +187,87 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const handleTextDblClick = (layer: Layer) => {
+      const stage = stageRef.current;
+      const container = containerRef.current;
+      if (!stage || !container) return;
+    
+      const [x, y] = layer.points;
+      const stageBox = stage.container().getBoundingClientRect();
+    
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+    
+      // Style matching
+      textarea.value = layer.text || '';
+      textarea.style.position = 'absolute';
+      textarea.style.top = `${stageBox.top + y}px`;
+      textarea.style.left = `${stageBox.left + x}px`;
+      textarea.style.fontSize = `${layer.fontSize || 18}px`;
+      textarea.style.fontWeight = 'normal'; // Ensures no bolding
+      textarea.style.border = '1px solid #ccc';
+      textarea.style.padding = '4px 8px';
+      textarea.style.margin = '0';
+      textarea.style.overflow = 'hidden';
+      textarea.style.resize = 'none';
+      textarea.style.background = 'white';
+      textarea.style.color = layer.colour;
+      textarea.style.fontFamily = 'inherit';
+      textarea.style.outline = 'none';
+      textarea.style.zIndex = '100';
+      textarea.style.borderRadius = '4px';
+      textarea.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
+      textarea.style.lineHeight = '1.2';
+    
+      // Sizing - width based on text length and font size
+      const estimatedWidth = (layer.text?.length || 10) * (layer.fontSize || 18) * 0.6;
+      textarea.style.minWidth = '100px';
+      textarea.style.maxWidth = '500px';
+      textarea.style.width = `${estimatedWidth}px`;
+    
+      // Height auto-adjust to fit content
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    
+      textarea.focus();
+    
+      const removeTextarea = () => {
+        document.body.removeChild(textarea);
+        setEditingTextId(null);
+      };
+    
+      const handleOutsideClick = (e: MouseEvent) => {
+        if (e.target !== textarea) {
+          updateText(layer.id, textarea.value);
+          removeTextarea();
+        }
+      };
+    
+      const updateText = (id: number, newText: string) => {
+        setLayers(prev => {
+          const updated = [...(prev[currentIndex] || [])];
+          const idx = updated.findIndex(l => l.id === id);
+          if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+          return { ...prev, [currentIndex]: updated };
+        });
+      };
+    
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          updateText(layer.id, textarea.value);
+          removeTextarea();
+        }
+        if (e.key === 'Escape') {
+          removeTextarea();
+        }
+      });
+    
+      setTimeout(() => {
+        window.addEventListener('click', handleOutsideClick);
+      });
+    
       setEditingTextId(layer.id);
-      setTextEditValue(layer.text || '');
     };
+    
 
     const handleTextEditCommit = (value: string) => {
       if (editingTextId !== null) {
@@ -202,7 +282,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     return (
-      <div style={{ position: 'relative' }}>
+      <div ref={containerRef} style={{ position: 'relative' }}>
         <Stage
           width={width}
           height={height}

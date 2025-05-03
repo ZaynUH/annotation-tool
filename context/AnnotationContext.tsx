@@ -9,7 +9,7 @@ import React, {
 
 export type Layer = {
   id: number;
-  type: 'pen' | 'line' | 'arrow' | 'circle' | 'rectangle';
+  type: 'pen' | 'line' | 'arrow' | 'circle' | 'ellipse' |'rectangle';
   colour: string;
   points: number[]; // [x1,y1, x2,y2] for lines/arrow; [x,y,width,height] for rect; [x,y,radius] for circle; [..] for pen
   name?: string;

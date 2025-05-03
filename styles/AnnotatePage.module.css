@@ -51,6 +51,7 @@
   font-size: 0.9rem;
   min-width: 70px;
   text-align: center;
+  color: black;
 }
 
 .toolButton:hover {

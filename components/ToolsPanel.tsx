@@ -15,7 +15,7 @@ export default function ToolsPanel({
   setActiveColour,
   onSave
 }: ToolsPanelProps) {
-  const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle'];
+  const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle', 'ellipse'];
 
   return (
     <div className={styles.toolsWrapper}>

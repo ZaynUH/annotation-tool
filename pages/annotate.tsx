@@ -21,6 +21,10 @@ export default function AnnotatePage() {
     setActiveTool,
     activeColour,
     setActiveColour,
+    undo,
+    canUndo,
+    redo,  
+    canRedo,
   } = useAnnotation();
 
   const { user } = useUser();
@@ -164,7 +168,12 @@ export default function AnnotatePage() {
           activeColour={activeColour}
           setActiveColour={setActiveColour}
           onSave={handleSave}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
+
         <div className={styles.workspace}>
           <ImagePanel
             images={images}

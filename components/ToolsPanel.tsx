@@ -6,6 +6,10 @@ interface ToolsPanelProps {
   activeColour: string;
   setActiveColour: (colour: string) => void;
   onSave: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export default function ToolsPanel({
@@ -13,7 +17,11 @@ export default function ToolsPanel({
   setSelectedTool,
   activeColour,
   setActiveColour,
-  onSave
+  onSave,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: ToolsPanelProps) {
   const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle', 'ellipse'];
 
@@ -38,12 +46,10 @@ export default function ToolsPanel({
           title="Pick Colour"
         />
 
-        <button
-          className={styles.toolButton}
-          onClick={onSave}
-        >
-          Save
-        </button>
+        <button className={styles.toolButton} onClick={onUndo} disabled={!canUndo}>Undo</button>
+        <button className={styles.toolButton} onClick={onRedo} disabled={!canRedo}>Redo</button>
+
+        <button className={styles.toolButton} onClick={onSave}>Save</button>
       </div>
     </div>
   );

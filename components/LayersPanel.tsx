@@ -43,7 +43,13 @@ const Preview = ({ layer }: { layer: LayerType }) => {
           </>
         );
       case 'pen':
-        return <polygon points="24,4 28,4 28,8" fill={layer.colour} stroke="none" />
+        return (
+        <>
+          <line x1={4} y1={28} x2={28} y2={4} {...svgProps} />
+          <polygon points="24,4 28,4 28,8" fill={layer.colour} stroke="none" />
+        </>
+        );
+        
       default:
         return null;
     }

@@ -211,8 +211,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
       }
     
-      // Reset position to avoid additive drift
-      node.position({ x: 0, y: 0 });
     };
     
 

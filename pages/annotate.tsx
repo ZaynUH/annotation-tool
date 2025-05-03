@@ -122,14 +122,14 @@ export default function AnnotatePage() {
     if (!user) return;
 
     const imageUrl = images[currentIndex];
-    const deckId = currentDeck.current?.id;
+    const imagePath = imageUrl.split('/').pop(); // get filename only
 
     const { data: imageData, error: fetchError } = await supabase
       .from('images')
       .select('id')
-      .eq('deck_id', deckId)
-      .eq('image_url', imageUrl)
-      .single();
+      .eq('deck_id', currentDeck.current.id)
+      .eq('image_url', imagePath) // compare to filename only
+      .single();    
 
     if (fetchError || !imageData) {
       alert('Could not find image in database.');

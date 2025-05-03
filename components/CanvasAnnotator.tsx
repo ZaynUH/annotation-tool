@@ -186,30 +186,34 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
-        const x = node.x(), y = node.y();
-
-        let newPoints = [...shape.points];
+        const newPoints = [...shape.points];
 
         if (shape.type === 'rectangle') {
-          newPoints = [x, y, node.width() * scaleX, node.height() * scaleY];
+          newPoints[2] *= scaleX;
+          newPoints[3] *= scaleY;
         } else if (shape.type === 'circle') {
-          newPoints = [x, y, node.radiusX() * scaleX];
+          newPoints[2] *= scaleX;
         } else if (shape.type === 'ellipse') {
-          newPoints = [x, y, node.radiusX() * scaleX, node.radiusY() * scaleY];
+          newPoints[2] *= scaleX;
+          newPoints[3] *= scaleY;
         } else if (shape.type === 'pen') {
           const box = node.getClientRect({ skipStroke: true });
           const originX = box.x;
           const originY = box.y;
-          const scaledPoints = shape.points.map((p, i) => {
-            return i % 2 === 0
-              ? ((p - originX) * scaleX + originX)
-              : ((p - originY) * scaleY + originY);
-          });
-          newPoints = scaledPoints;
+          const boxWidth = box.width;
+          const boxHeight = box.height;
+
+          for (let i = 0; i < newPoints.length; i += 2) {
+            const relX = (newPoints[i] - originX) / boxWidth;
+            const relY = (newPoints[i + 1] - originY) / boxHeight;
+            newPoints[i] = originX + relX * boxWidth * scaleX;
+            newPoints[i + 1] = originY + relY * boxHeight * scaleY;
+          }
         }
 
         updateLayerPoints(id, newPoints);
         node.scale({ x: 1, y: 1 });
+        node.position({ x: 0, y: 0 });
       });
     };
 

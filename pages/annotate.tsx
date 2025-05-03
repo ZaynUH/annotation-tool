@@ -28,6 +28,7 @@ export default function AnnotatePage() {
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
+  // Load deck and images
   useEffect(() => {
     const storedDeck = localStorage.getItem('currentDeck');
     if (storedDeck) {
@@ -39,6 +40,7 @@ export default function AnnotatePage() {
         setImages(parsed.images);
         setCurrentIndex(0);
 
+        // For guests, load layers from localStorage
         if (!user) {
           const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
           if (savedLayers) {
@@ -49,27 +51,32 @@ export default function AnnotatePage() {
     }
   }, [user]);
 
+  // For guests: persist changes to localStorage
   useEffect(() => {
     if (deckNameRef.current && !user) {
       localStorage.setItem(`layers_${deckNameRef.current}`, JSON.stringify(layers));
     }
   }, [layers, user]);
 
+  // Load layers for the current image from the database
   useEffect(() => {
     const loadFromDB = async () => {
       if (!user || !currentDeck.current) return;
+
       const imageUrl = images[currentIndex];
       if (!imageUrl || loadedImageIds.has(imageUrl)) return;
 
-      const { data: imageData, error } = await supabase
+      const imagePath = imageUrl.split('/').pop(); // extract just the filename
+
+      const { data: imageData, error: fetchError } = await supabase
         .from('images')
         .select('id')
         .eq('deck_id', currentDeck.current.id)
-        .eq('image_url', imageUrl)
+        .eq('image_url', imagePath)
         .single();
 
-      if (error || !imageData) {
-        console.warn('Image not found in DB:', error);
+      if (fetchError || !imageData) {
+        console.warn('Image not found in DB:', fetchError);
         return;
       }
 
@@ -83,8 +90,8 @@ export default function AnnotatePage() {
         return;
       }
 
-      const parsed = layerData.map((layer) => ({
-        id: Date.now() + Math.random(),
+      const parsedLayers = layerData.map((layer) => ({
+        id: Date.now() + Math.random(), // Ensure unique id
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
@@ -92,7 +99,7 @@ export default function AnnotatePage() {
 
       setLayers((prev) => ({
         ...prev,
-        [currentIndex]: parsed,
+        [currentIndex]: parsedLayers,
       }));
 
       setLoadedImageIds((prev) => new Set(prev).add(imageUrl));
@@ -119,17 +126,17 @@ export default function AnnotatePage() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !currentDeck.current) return;
 
     const imageUrl = images[currentIndex];
-    const imagePath = imageUrl.split('/').pop(); // get filename only
+    const imagePath = imageUrl.split('/').pop();
 
     const { data: imageData, error: fetchError } = await supabase
       .from('images')
       .select('id')
       .eq('deck_id', currentDeck.current.id)
-      .eq('image_url', imagePath) // compare to filename only
-      .single();    
+      .eq('image_url', imagePath)
+      .single();
 
     if (fetchError || !imageData) {
       alert('Could not find image in database.');

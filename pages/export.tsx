@@ -17,52 +17,50 @@ interface Layer {
 }
 
 export default function ExportPage() {
-  const [decks, setDecks] = useState<Deck[]>([]);
+  const [deck, setDeck] = useState<Deck | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [annotations, setAnnotations] = useState<Record<string, Layer[]>>({});
   const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
   const { user } = useUser();
 
   useEffect(() => {
-    const stored = localStorage.getItem('imageDecks');
+    const stored = localStorage.getItem('currentDeck');
     if (stored) {
-      setDecks(JSON.parse(stored));
+      setDeck(JSON.parse(stored));
     }
   }, []);
 
   useEffect(() => {
     const fetchAnnotations = async () => {
-      if (!user) return;
+      if (!user || !deck) return;
 
-      for (const deck of decks) {
-        for (const imageUrl of deck.images) {
-          const filePath = imageUrl.split('/').pop();
+      for (const imageUrl of deck.images) {
+        const filePath = imageUrl.split('/').pop();
 
-          const { data: imageRecord } = await supabase
-            .from('images')
-            .select('id')
-            .eq('image_url', filePath)
-            .single();
+        const { data: imageRecord } = await supabase
+          .from('images')
+          .select('id')
+          .eq('image_url', filePath)
+          .single();
 
-          if (!imageRecord) continue;
+        if (!imageRecord) continue;
 
-          const { data: layerData } = await supabase
-            .from('layers')
-            .select('*')
-            .eq('image_id', imageRecord.id);
+        const { data: layerData } = await supabase
+          .from('layers')
+          .select('*')
+          .eq('image_id', imageRecord.id);
 
-          if (layerData) {
-            setAnnotations((prev) => ({
-              ...prev,
-              [imageUrl]: layerData,
-            }));
-          }
+        if (layerData) {
+          setAnnotations((prev) => ({
+            ...prev,
+            [imageUrl]: layerData,
+          }));
         }
       }
     };
 
     fetchAnnotations();
-  }, [decks, user]);
+  }, [deck, user]);
 
   const toggleImage = (img: string) => {
     setSelectedImages((prev) =>
@@ -133,7 +131,7 @@ export default function ExportPage() {
     selectedImages.forEach((img) => {
       const canvas = exportRefs.current[img];
       if (canvas) {
-        drawAnnotations(canvas, img); // re-render to ensure latest
+        drawAnnotations(canvas, img); // Ensure fresh render
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
         a.download = 'annotated-image.png';
@@ -149,11 +147,16 @@ export default function ExportPage() {
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <Toolbar />
 
-        <div className={styles.section}>
-          <input className={styles.deckInput} type="text" value="Decks" readOnly />
+        <div className={styles.importSection}>
+          <input
+            className={styles.deckInput}
+            type="text"
+            value={deck?.name || ''}
+            readOnly
+          />
           <div className={styles.decksGrid}>
-            {decks.map((deck, deckIdx) => (
-              <div key={deckIdx} className={styles.deck}>
+            {deck && (
+              <div className={styles.deck}>
                 <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div className={styles.deckRow}>
                   {deck.images.map((img, idx) => (
@@ -169,11 +172,11 @@ export default function ExportPage() {
                   ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        <div className={styles.section}>
+        <div className={styles.importSection}>
           <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRow}>
             {selectedImages.map((img, idx) => (

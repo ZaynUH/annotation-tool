@@ -28,6 +28,9 @@ export default function AnnotatePage() {
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
+  const BUCKET = 'images';
+  const PROJECT_URL = 'https://sflyeuxvdpndrwuofgqb.supabase.co';
+
   // Load deck and images
   useEffect(() => {
     const storedDeck = localStorage.getItem('currentDeck');
@@ -37,7 +40,14 @@ export default function AnnotatePage() {
       deckNameRef.current = parsed.name;
 
       if (parsed.images?.length) {
-        setImages(parsed.images);
+        const imagePaths = parsed.images.map((path: string) => {
+          // Guests have local blob URLs; users have Supabase file names
+          return path.startsWith('blob:')
+            ? path
+            : `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        });
+
+        setImages(imagePaths);
         setCurrentIndex(0);
 
         if (!user) {
@@ -61,14 +71,17 @@ export default function AnnotatePage() {
   useEffect(() => {
     const loadFromDB = async () => {
       if (!user || !currentDeck.current) return;
+
       const imageUrl = images[currentIndex];
       if (!imageUrl || loadedImageIds.has(imageUrl)) return;
+
+      const storageFilePath = imageUrl.split('/').pop(); // Get just filename
 
       const { data: imageData, error } = await supabase
         .from('images')
         .select('id')
         .eq('deck_id', currentDeck.current.id)
-        .eq('image_url', imageUrl)
+        .eq('image_url', storageFilePath)
         .single();
 
       if (error || !imageData) {
@@ -87,7 +100,7 @@ export default function AnnotatePage() {
       }
 
       const parsed = layerData.map((layer) => ({
-        id: Date.now() + Math.random(), // Local unique id
+        id: Date.now() + Math.random(),
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
@@ -126,12 +139,13 @@ export default function AnnotatePage() {
 
     const imageUrl = images[currentIndex];
     const deckId = currentDeck.current?.id;
+    const storageFilePath = imageUrl.split('/').pop();
 
     const { data: imageData, error: fetchError } = await supabase
       .from('images')
       .select('id')
       .eq('deck_id', deckId)
-      .eq('image_url', imageUrl)
+      .eq('image_url', storageFilePath)
       .single();
 
     if (fetchError || !imageData) {

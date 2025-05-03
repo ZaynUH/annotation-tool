@@ -5,6 +5,8 @@ interface ToolsPanelProps {
   setSelectedTool: (tool: string) => void;
   activeColour: string;
   setActiveColour: (colour: string) => void;
+  fontSize: number;
+  setFontSize: (size: number) => void;
   onSave: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -17,13 +19,15 @@ export default function ToolsPanel({
   setSelectedTool,
   activeColour,
   setActiveColour,
+  fontSize,
+  setFontSize,
   onSave,
   onUndo,
   onRedo,
   canUndo,
   canRedo,
 }: ToolsPanelProps) {
-  const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle', 'ellipse'];
+  const tools = ['select', 'pen', 'line', 'arrow', 'rectangle', 'circle', 'ellipse', 'text'];
 
   return (
     <div className={styles.toolsWrapper}>
@@ -46,9 +50,21 @@ export default function ToolsPanel({
           title="Pick Colour"
         />
 
+        <label style={{ marginLeft: 8 }}>
+          Size
+          <input
+            type="number"
+            min={1}
+            max={72}
+            value={fontSize}
+            onChange={(e) => setFontSize(Number(e.target.value))}
+            className={styles.strokeInput}
+            style={{ width: 60, marginLeft: 4 }}
+          />
+        </label>
+
         <button className={styles.toolButton} onClick={onUndo} disabled={!canUndo}>Undo</button>
         <button className={styles.toolButton} onClick={onRedo} disabled={!canRedo}>Redo</button>
-
         <button className={styles.toolButton} onClick={onSave}>Save</button>
       </div>
     </div>

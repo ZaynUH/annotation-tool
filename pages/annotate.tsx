@@ -21,6 +21,8 @@ export default function AnnotatePage() {
     setActiveTool,
     activeColour,
     setActiveColour,
+    fontSize,
+    setFontSize,
     undo,
     canUndo,
     redo,  
@@ -167,6 +169,8 @@ export default function AnnotatePage() {
           setSelectedTool={setActiveTool}
           activeColour={activeColour}
           setActiveColour={setActiveColour}
+          fontSize={fontSize}
+          setFontSize={setFontSize} 
           onSave={handleSave}
           onUndo={undo}
           onRedo={redo}

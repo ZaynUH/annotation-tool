@@ -15,6 +15,7 @@ import {
   Circle,
   Ellipse,
   Transformer,
+  Text,
 } from 'react-konva';
 import useImage from 'use-image';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
@@ -37,7 +38,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       selectedId,
       setSelectedId,
       activeColour,
-      pushHistory, // ✅ ADDED
+      fontSize,
+      pushHistory,
     } = useAnnotation();
 
     const stageRef = useRef<any>(null);
@@ -83,7 +85,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     }, [selectedIds, currentLayers]);
 
     const updateLayerPoints = (id: number, points: number[]) => {
-      // ✅ Push current state before update
       pushHistory(currentIndex, layers[currentIndex] || []);
       setLayers(prev => {
         const updated = [...(prev[currentIndex] || [])];
@@ -94,7 +95,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     const updateLayer = (newLayer: Layer) => {
-      // ✅ Push current state before new layer
       pushHistory(currentIndex, layers[currentIndex] || []);
       setLayers(prev => {
         const next = [...(prev[currentIndex] || []), newLayer];
@@ -102,7 +102,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       });
     };
 
-    // ⬇️ All remaining code is unchanged
     const handleSelect = (e: any) => {
       if (previewOnly || activeTool !== 'select') return;
       const idStr = e.target.id();
@@ -127,6 +126,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       if (activeTool === 'pen') {
         setIsDrawing(true);
         updateLayer({ ...base, points: [pos.x, pos.y] });
+      } else if (activeTool === 'text') {
+        updateLayer({
+          ...base,
+          points: [pos.x, pos.y],
+          text: 'Text',
+          fontSize,
+        });
       } else {
         setDraftLayer({ ...base, points: [] });
       }
@@ -195,6 +201,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       } else if (shape.type === 'ellipse') {
         const [, , rx, ry] = shape.points;
         newPoints = [clampedX, clampedY, rx, ry];
+      } else if (shape.type === 'text') {
+        newPoints = [clampedX, clampedY];
       } else {
         const dx = node.x(), dy = node.y();
         newPoints = shape.points.map((p, i) => p + (i % 2 === 0 ? dx : dy));
@@ -272,13 +280,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
               key: layer.id,
               id: `layer-${layer.id}`,
               stroke: layer.colour,
-              strokeWidth: 2,
+              strokeWidth: layer.fontSize || 2,
               draggable: activeTool === 'select',
               onDragEnd: handleDragEnd,
               onTransformEnd: handleTransformEnd,
               onClick: handleSelect,
               onTap: handleSelect,
-              fill: ['rectangle', 'circle', 'ellipse'].includes(layer.type) ? 'transparent' : undefined,
+              fill: ['rectangle', 'circle', 'ellipse', 'text'].includes(layer.type) ? 'transparent' : undefined,
             };
 
             switch (layer.type) {
@@ -304,6 +312,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[2]} />;
               case 'ellipse':
                 return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
+              case 'text':
+                return <Text {...common} x={layer.points[0]} y={layer.points[1]} text={layer.text || 'Text'} fontSize={layer.fontSize || 18} />;
               default:
                 return null;
             }

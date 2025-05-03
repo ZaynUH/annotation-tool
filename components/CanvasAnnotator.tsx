@@ -62,12 +62,12 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       getStage: () => stageRef.current,
     }));
 
+    // Attach transformer
     useEffect(() => {
       const transformer = transformerRef.current;
-      const stage = stageRef.current;
-      if (!transformer || selectedId == null || !stage) return;
+      if (!transformer || selectedId == null) return;
 
-      const node = stage.findOne(`#layer-${selectedId}`);
+      const node = stageRef.current.findOne(`#layer-${selectedId}`);
       const layerData = currentLayers.find((l) => l.id === selectedId);
       if (!node || !layerData) return;
 
@@ -77,24 +77,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       }
 
       transformer.nodes([node]);
-      transformer.setAttrs({
-        rotateEnabled: true,
-        anchorSize: 8,
-        anchorStroke: '#3b82f6',
-        anchorFill: '#ffffff',
-        borderDash: [6, 4],
-        enabledAnchors: [
-          'top-left',
-          'top-right',
-          'bottom-left',
-          'bottom-right',
-          'middle-left',
-          'middle-right',
-          'top-center',
-          'bottom-center',
-        ],
-      });
-
       transformer.getLayer().batchDraw();
     }, [selectedId, currentLayers]);
 
@@ -105,7 +87,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         if (idx !== -1) updated[idx] = { ...updated[idx], points: newPoints };
         return { ...prev, [currentIndex]: updated };
       });
-
       requestAnimationFrame(() => {
         stageRef.current?.batchDraw();
       });
@@ -195,16 +176,19 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const layer = currentLayers.find((l) => l.id === id);
       if (!layer) return;
 
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-
       if (layer.type === 'rectangle') {
-        updateLayerPoints(id, [node.x(), node.y(), node.width() * scaleX, node.height() * scaleY]);
+        const scaleX = node.scaleX();
+        const scaleY = node.scaleY();
+        const newW = node.width() * scaleX;
+        const newH = node.height() * scaleY;
+        updateLayerPoints(id, [node.x(), node.y(), newW, newH]);
+        node.scale({ x: 1, y: 1 });
       } else if (layer.type === 'circle') {
-        updateLayerPoints(id, [node.x(), node.y(), node.radius() * scaleX]);
+        const scaleX = node.scaleX();
+        const newR = node.radius() * scaleX;
+        updateLayerPoints(id, [node.x(), node.y(), newR]);
+        node.scale({ x: 1, y: 1 });
       }
-
-      node.scale({ x: 1, y: 1 });
     };
 
     const handleDragEnd = (e: any) => {
@@ -269,7 +253,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
             switch (layer.type) {
               case 'pen':
-                return <Line key={layer.id} points={layer.points} lineCap="round" tension={0.4} {...common} />;
+                return <Line key={layer.id} points={layer.points} lineCap="round" {...common} />;
               case 'line':
                 return <Line key={layer.id} points={layer.points} hitStrokeWidth={20} {...common} />;
               case 'arrow':

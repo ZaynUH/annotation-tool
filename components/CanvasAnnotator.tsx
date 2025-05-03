@@ -1,3 +1,5 @@
+// 🧠 Full improved CanvasAnnotator with Pen fix, Custom Line Anchors, Circle logic
+
 import React, {
   forwardRef,
   useEffect,
@@ -13,10 +15,11 @@ import {
   Arrow,
   Rect,
   Circle,
+  Ellipse,
   Transformer,
 } from 'react-konva';
-import Konva from 'konva';
 import useImage from 'use-image';
+import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
 
 interface CanvasAnnotatorProps {
@@ -75,19 +78,16 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const nodes = selectedIds
         .map(id => stageRef.current.findOne(`#layer-${id}`))
         .filter(Boolean);
-      transformerRef.current.nodes(nodes);
-      transformerRef.current.getLayer()?.batchDraw();
 
-      // limit anchor points for line/arrow
-      if (nodes.length === 1) {
-        const node = nodes[0];
-        const layer = currentLayers.find(l => `layer-${l.id}` === node.id());
-        if (layer && (layer.type === 'line' || layer.type === 'arrow')) {
-          transformerRef.current.enabledAnchors(['start', 'end']);
-        } else {
-          transformerRef.current.enabledAnchors(undefined);
-        }
-      }
+      // Skip transformer for line/arrow types
+      const shapes = nodes.filter((node) => {
+        const shapeId = Number(node.id().replace('layer-', ''));
+        const shape = currentLayers.find((l) => l.id === shapeId);
+        return shape?.type !== 'line' && shape?.type !== 'arrow';
+      });
+
+      transformerRef.current.nodes(shapes);
+      transformerRef.current.getLayer()?.batchDraw();
     }, [selectedIds, currentLayers]);
 
     const updateLayerPoints = (id: number, newPoints: number[]) => {
@@ -110,10 +110,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const handleSelect = (e: any) => {
       if (previewOnly || activeTool !== 'select') return;
-
       const idStr = e.target.id();
       const isMeta = e.evt.ctrlKey || e.evt.metaKey;
-
       if (idStr?.startsWith('layer-')) {
         const id = Number(idStr.replace('layer-', ''));
         if (isMeta) {
@@ -132,18 +130,11 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const startDrawing = (e: any) => {
       if (previewOnly || activeTool === 'select') return;
-
       const pos = e.target.getStage().getPointerPosition();
       if (!pos) return;
       setStartPoint(pos);
-
       const id = Date.now();
-      const base = {
-        id,
-        type: activeTool as Layer['type'],
-        colour: activeColour,
-      };
-
+      const base = { id, type: activeTool as Layer['type'], colour: activeColour };
       if (activeTool === 'pen') {
         setIsDrawing(true);
         updateLayer({ ...base, points: [pos.x, pos.y] });
@@ -178,8 +169,9 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           const h = Math.abs(pos.y - startPoint.y);
           points = [x, y, w, h];
         } else if (activeTool === 'circle') {
-          const r = Math.hypot(pos.x - startPoint.x, pos.y - startPoint.y);
-          points = [startPoint.x, startPoint.y, r];
+          const rx = Math.abs(pos.x - startPoint.x);
+          const ry = Math.abs(pos.y - startPoint.y);
+          points = [startPoint.x, startPoint.y, rx, ry];
         }
         setDraftLayer({ id: -1, type: activeTool as Layer['type'], colour: activeColour, points });
       }
@@ -200,29 +192,10 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const shape = currentLayers.find((l) => l.id === id);
       if (!shape) return;
 
-      const abs = node.absolutePosition();
-      const { width, height } = stageRef.current.size();
-      const clampedX = Math.max(0, Math.min(abs.x, width));
-      const clampedY = Math.max(0, Math.min(abs.y, height));
-
-      if (shape.type === 'rectangle') {
-        const [, , w, h] = shape.points;
-        updateLayerPoints(id, [clampedX, clampedY, w, h]);
-      } else if (shape.type === 'circle') {
-        const [, , r] = shape.points;
-        updateLayerPoints(id, [clampedX, clampedY, r]);
-      } else if (shape.type === 'line' || shape.type === 'arrow') {
-        const dx = node.x();
-        const dy = node.y();
-        const [x1, y1, x2, y2] = shape.points;
-        updateLayerPoints(id, [x1 + dx, y1 + dy, x2 + dx, y2 + dy]);
-      } else if (shape.type === 'pen') {
-        const dx = node.x();
-        const dy = node.y();
-        const newPoints = shape.points.map((p, i) => (i % 2 === 0 ? p + dx : p + dy));
-        updateLayerPoints(id, newPoints);
-      }
-
+      const dx = node.x();
+      const dy = node.y();
+      const newPoints = shape.points.map((p, i) => (i % 2 === 0 ? p + dx : p + dy));
+      updateLayerPoints(id, newPoints);
       node.position({ x: 0, y: 0 });
     };
 
@@ -234,25 +207,64 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
-        const x = node.x();
-        const y = node.y();
+        const newPoints = [...shape.points];
 
         if (shape.type === 'rectangle') {
-          updateLayerPoints(id, [x, y, node.width() * scaleX, node.height() * scaleY]);
+          newPoints[2] *= scaleX;
+          newPoints[3] *= scaleY;
         } else if (shape.type === 'circle') {
-          updateLayerPoints(id, [x, y, node.radius() * scaleX]);
+          newPoints[2] *= scaleX;
+          newPoints[3] *= scaleY;
         } else if (shape.type === 'pen') {
-          const newPoints = shape.points.map((p, i) => {
-            return i % 2 === 0
-              ? (p - shape.points[0]) * scaleX + x
-              : (p - shape.points[1]) * scaleY + y;
-          });
-          updateLayerPoints(id, newPoints);
+          for (let i = 0; i < newPoints.length; i += 2) {
+            newPoints[i] = (newPoints[i] - shape.points[0]) * scaleX + node.x();
+            newPoints[i + 1] = (newPoints[i + 1] - shape.points[1]) * scaleY + node.y();
+          }
         }
 
+        updateLayerPoints(id, newPoints);
         node.scale({ x: 1, y: 1 });
         node.position({ x: 0, y: 0 });
       });
+    };
+
+    const renderAnchorsForLine = (layer: Layer) => {
+      const [x1, y1, x2, y2] = layer.points;
+      const updatePoint = (index: number, x: number, y: number) => {
+        const updated = [...layer.points];
+        updated[index] = x;
+        updated[index + 1] = y;
+        updateLayerPoints(layer.id, updated);
+      };
+
+      return (
+        <>
+          <Circle
+            x={x1}
+            y={y1}
+            radius={6}
+            fill="white"
+            stroke="black"
+            draggable
+            onDragMove={(e) => {
+              const pos = e.target.position();
+              updatePoint(0, pos.x, pos.y);
+            }}
+          />
+          <Circle
+            x={x2}
+            y={y2}
+            radius={6}
+            fill="white"
+            stroke="black"
+            draggable
+            onDragMove={(e) => {
+              const pos = e.target.position();
+              updatePoint(2, pos.x, pos.y);
+            }}
+          />
+        </>
+      );
     };
 
     return (
@@ -286,15 +298,25 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
             switch (layer.type) {
               case 'pen':
-                return <Line {...common} points={layer.points} lineCap="round" closed={false} />;
+                return <Line {...common} points={layer.points} lineCap="round" />;
               case 'line':
-                return <Line {...common} points={layer.points} hitStrokeWidth={20} />;
+                return (
+                  <>
+                    <Line {...common} points={layer.points} hitStrokeWidth={20} />
+                    {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
+                  </>
+                );
               case 'arrow':
-                return <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />;
+                return (
+                  <>
+                    <Arrow {...common} points={layer.points} fill={layer.colour} hitStrokeWidth={20} />
+                    {selectedIds.includes(layer.id) && renderAnchorsForLine(layer)}
+                  </>
+                );
               case 'rectangle':
                 return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
               case 'circle':
-                return <Circle {...common} x={layer.points[0]} y={layer.points[1]} radius={layer.points[2]} />;
+                return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
               default:
                 return null;
             }

@@ -1,17 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
 import { useUser } from '../context/UserContext';
+import { supabase } from '../lib/supabase';
 import styles from '../styles/ExportPage.module.css';
 
 interface Deck {
+  id?: string;
   name: string;
   images: string[];
 }
 
+interface Layer {
+  type: string;
+  colour: string;
+  points: number[];
+}
+
 export default function ExportPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [exportDeck, setExportDeck] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [annotations, setAnnotations] = useState<Record<string, Layer[]>>({});
   const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
   const { user } = useUser();
 
@@ -22,22 +30,110 @@ export default function ExportPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchAnnotations = async () => {
+      if (!user) return;
+
+      for (const deck of decks) {
+        for (const imageUrl of deck.images) {
+          const filePath = imageUrl.split('/').pop();
+
+          const { data: imageRecord } = await supabase
+            .from('images')
+            .select('id')
+            .eq('image_url', filePath)
+            .single();
+
+          if (!imageRecord) continue;
+
+          const { data: layerData } = await supabase
+            .from('layers')
+            .select('*')
+            .eq('image_id', imageRecord.id);
+
+          if (layerData) {
+            setAnnotations((prev) => ({
+              ...prev,
+              [imageUrl]: layerData,
+            }));
+          }
+        }
+      }
+    };
+
+    fetchAnnotations();
+  }, [decks, user]);
+
   const toggleImage = (img: string) => {
     setSelectedImages((prev) =>
       prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
-  const addToExportDeck = () => {
-    const unique = Array.from(new Set([...exportDeck, ...selectedImages]));
-    setExportDeck(unique);
-    setSelectedImages([]);
+  const drawAnnotations = (canvas: HTMLCanvasElement, imageUrl: string) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.src = imageUrl;
+
+    image.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const layers = annotations[imageUrl] || [];
+
+      for (const layer of layers) {
+        ctx.strokeStyle = layer.colour;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        switch (layer.type) {
+          case 'pen':
+            ctx.moveTo(layer.points[0], layer.points[1]);
+            for (let i = 2; i < layer.points.length; i += 2) {
+              ctx.lineTo(layer.points[i], layer.points[i + 1]);
+            }
+            ctx.stroke();
+            break;
+          case 'line':
+          case 'arrow':
+            ctx.moveTo(layer.points[0], layer.points[1]);
+            ctx.lineTo(layer.points[2], layer.points[3]);
+            ctx.stroke();
+            break;
+          case 'rectangle':
+            ctx.strokeRect(
+              layer.points[0],
+              layer.points[1],
+              layer.points[2],
+              layer.points[3]
+            );
+            break;
+          case 'circle':
+            ctx.beginPath();
+            ctx.arc(
+              layer.points[0],
+              layer.points[1],
+              layer.points[2],
+              0,
+              Math.PI * 2
+            );
+            ctx.stroke();
+            break;
+          default:
+            break;
+        }
+      }
+    };
   };
 
   const handleExport = () => {
-    exportDeck.forEach((img) => {
+    selectedImages.forEach((img) => {
       const canvas = exportRefs.current[img];
       if (canvas) {
+        drawAnnotations(canvas, img); // re-render to ensure latest
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
         a.download = 'annotated-image.png';
@@ -55,48 +151,49 @@ export default function ExportPage() {
 
         <div className={styles.section}>
           <input className={styles.deckInput} type="text" value="Decks" readOnly />
-          <div className={styles.grid}>
-            {decks.flatMap((deck) =>
-              deck.images.map((img, idx) => (
-                <div
-                  key={`${deck.name}-${idx}`}
-                  className={`${styles.gridItem} ${
-                    selectedImages.includes(img) ? styles.selected : ''
-                  }`}
-                  onClick={() => toggleImage(img)}
-                >
-                  <img src={img} className={styles.gridImage} />
+          <div className={styles.decksGrid}>
+            {decks.map((deck, deckIdx) => (
+              <div key={deckIdx} className={styles.deck}>
+                <input className={styles.deckTitle} value={deck.name} readOnly />
+                <div className={styles.deckRow}>
+                  {deck.images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className={`${styles.deckImg} ${
+                        selectedImages.includes(img) ? styles.selected : ''
+                      }`}
+                      onClick={() => toggleImage(img)}
+                    >
+                      <img src={img} className={styles.gridImage} />
+                    </div>
+                  ))}
                 </div>
-              ))
-            )}
-            <button className={styles.nextButton} onClick={addToExportDeck}>
-              &gt;
-            </button>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className={styles.section}>
-          <input className={styles.deckInput} type="text" value="Export" readOnly />
-          <div className={styles.exportArea}>
-            <input className={styles.deckInput} type="text" value="File Name" readOnly />
-            <div className={styles.deckImages}>
-              {exportDeck.map((img, idx) => (
-                <div key={idx} className={styles.gridItem}>
-                  <canvas
-                    ref={(el) => {
-                      if (el) exportRefs.current[img] = el;
-                    }}
-                    width={300}
-                    height={400}
-                  />
-                  {/* TODO: Draw background + annotations using Konva logic or 2D canvas here */}
-                </div>
-              ))}
-            </div>
-            <button className={styles.exportButton} onClick={handleExport}>
-              Export
-            </button>
+          <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
+          <div className={styles.deckRow}>
+            {selectedImages.map((img, idx) => (
+              <canvas
+                key={idx}
+                ref={(el) => {
+                  if (el) {
+                    exportRefs.current[img] = el;
+                    drawAnnotations(el, img);
+                  }
+                }}
+                width={300}
+                height={400}
+                className={styles.exportCanvas}
+              />
+            ))}
           </div>
+          <button className={styles.exportButton} onClick={handleExport}>
+            Export as PNG
+          </button>
         </div>
       </div>
     </div>

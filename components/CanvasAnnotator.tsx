@@ -19,7 +19,6 @@ import {
   Transformer,
 } from 'react-konva';
 import useImage from 'use-image';
-import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
 
 interface CanvasAnnotatorProps {

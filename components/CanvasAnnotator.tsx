@@ -282,7 +282,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     };
 
     return (
-      <div ref={containerRef} style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
         <Stage
           width={width}
           height={height}

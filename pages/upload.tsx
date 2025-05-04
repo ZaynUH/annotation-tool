@@ -159,15 +159,6 @@ export default function UploadPage() {
                     </div>
                   ))}
                 </div>
-                <button
-                  className={styles.nextButton}
-                  onClick={() => {
-                    localStorage.setItem('currentDeck', JSON.stringify(deck));
-                    router.push('/annotate');
-                  }}
-                >
-                  &gt;
-                </button>
               </div>
             ))}
           </div>

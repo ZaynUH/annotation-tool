@@ -47,47 +47,55 @@ export default function UploadPage() {
   const handleAnnotate = async () => {
     if (!deckName.trim() || imageFiles.length === 0) return;
     const trimmedName = deckName.trim();
-
+  
     if (decks.some((d) => d.name === trimmedName)) {
       alert('You already have a deck with this name');
       return;
     }
-
-    if (user) {
-      const uploadedPaths: string[] = [];
-
-      for (const file of imageFiles) {
-        const filePath = `${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('images')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error('Upload failed:', uploadError.message);
-          continue;
-        }
-
-        uploadedPaths.push(filePath);
-      }
-
-      const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
-      if (error || !deck) {
-        alert('Failed to save to database');
-        return;
-      }
-
-      localStorage.setItem('currentDeck', JSON.stringify(deck));
-      fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
-    } else {
+  
+    if (!user) {
       alert('You must be logged in to annotate and save decks.');
       return;
     }
-
+  
+    const uploadedPaths: string[] = [];
+  
+    for (const file of imageFiles) {
+      const filePath = `${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, file);
+  
+      if (uploadError) {
+        console.error('Upload failed:', uploadError.message);
+        continue;
+      }
+  
+      uploadedPaths.push(filePath);
+    }
+  
+    const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
+    if (error || !deck) {
+      alert('Failed to save to database');
+      return;
+    }
+  
+    // Wait until localStorage is set
+    localStorage.setItem('currentDeck', JSON.stringify(deck));
+  
+    // Optional: ensure decks list is refreshed
+    const { decks: updatedDecks } = await fetchDecksByUser(user.id);
+    setDecks(updatedDecks);
+  
+    // Reset form state
     setDeckName('');
     setImageFiles([]);
     setSelected(null);
-    router.push('/annotate');
+  
+    // ✅ Navigate after everything else is done
+    await router.push('/annotate');
   };
+  
 
   return (
     <div className={styles.page}>

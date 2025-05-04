@@ -5,7 +5,6 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  overflow: hidden;
 }
 
 .card {
@@ -28,7 +27,6 @@
   color: black;
 }
 
-/* Deck list section */
 .section {
   margin: 1rem;
 }
@@ -45,36 +43,22 @@
   color: black;
 }
 
-/* Deck grid structure */
 .decksGrid {
   display: flex;
+  overflow-x: auto;
   gap: 1rem;
-  justify-content: space-between;
-  min-height: 225px;
-  background-color: #e5e5e5;
-  border: 1px solid #d1d1d1;
+  padding-bottom: 0.5rem;
 }
 
 .deck {
-  flex: 1;
   background-color: #e5e5e5;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   padding: 1rem;
+  min-width: 220px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
-}
-
-.deckTitle {
-  width: 75%;
-  padding: 0.25rem 0.5rem;
-  background-color: #fff;
-  border: 1px solid #d1d1d1;
-  border-radius: 6px;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: black;
 }
 
 .deckRow {
@@ -89,14 +73,15 @@
 }
 
 .deckImg {
-  width: 60px;
-  aspect-ratio: 2/3;
+  width: 120px;
+  height: 180px;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .gridImage {
@@ -105,27 +90,30 @@
   object-fit: contain;
 }
 
-/* highlight */
 .selected {
   border: 2px solid #3b82f6;
 }
 
-/* canvas preview section */
 .exportCanvas {
+  width: 120px;
+  height: 180px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
-  margin: 0.5rem;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
-/* export preview row */
 .deckRowPreview {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background-color: #fff;
 }
 
-/* export button */
 .exportButton {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
@@ -134,4 +122,5 @@
   background-color: white;
   border: 1px solid #000;
   cursor: pointer;
+  color: black;
 }

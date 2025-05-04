@@ -208,27 +208,34 @@ export default function AnnotatePage()
   };
 
   // Handle save/discard prompt when navigating away
-  const handleTabSwitch = async () => 
+  const handleTabSwitch = async (path: string) => 
   {
-    const hasUnsavedChanges = JSON.stringify(initialLayers[currentIndex]) !== JSON.stringify(currentLayers);
-
-    if (hasUnsavedChanges) 
+    // Only guard navigation when going to /upload
+    if (path === '/upload') 
     {
-      if (user) 
+      const hasUnsavedChanges =
+        JSON.stringify(initialLayers[currentIndex]) !== JSON.stringify(currentLayers);
+  
+      if (hasUnsavedChanges) 
       {
-        const confirmSave = confirm('You have unsaved changes. Do you want to save before leaving?');
-        if (confirmSave) await handleSave();
-      } 
-      else 
-      {
-        const confirmLeave = confirm('You are not logged in. Leaving this page will lose all unsaved annotations.\n\nAre you sure you want to leave?');
-        if (!confirmLeave) return;
+        if (user) 
+        {
+          const confirmSave = confirm('You have unsaved changes. Do you want to save before leaving?');
+          if (confirmSave) await handleSave();
+        } 
+        else 
+        {
+          const confirmLeave = confirm(
+            'You are not logged in. Leaving this page will lose all unsaved annotations.\n\nAre you sure you want to leave?'
+          );
+          if (!confirmLeave) return;
+        }
       }
     }
-
-    // Navigate after handling
-    window.location.href = '/upload';
+    // Navigate to destination
+    router.push(path);
   };
+  
 
   return (
     <div className={styles.page}>

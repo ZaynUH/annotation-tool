@@ -29,7 +29,7 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();
     const fill = textNode.fill();
-    textarea.style.color = typeof fill === 'string' ? fill : '#000';    
+    textarea.style.color = typeof fill === 'string' ? fill : '#000';
     textarea.style.background = 'transparent';
     textarea.style.border = '1px dashed #999';
     textarea.style.padding = '0px';
@@ -37,14 +37,19 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
     textarea.style.zIndex = '1000';
+    textarea.style.width = `${textNode.width() * scale.x}px`;
 
     textarea.focus();
+
+    const commit = () => {
+      onChange(textarea.value);
+      onClose();
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        onChange(textarea.value);
-        onClose();
+        commit();
       } else if (e.key === 'Escape') {
         onClose();
       }
@@ -52,15 +57,19 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
 
     const handleClickOutside = (e: MouseEvent) => {
       if (e.target !== textarea) {
-        onChange(textarea.value);
-        onClose();
+        commit();
       }
     };
 
-    window.addEventListener('click', handleClickOutside);
     textarea.addEventListener('keydown', handleKeyDown);
 
+    // ✅ Delay outside click binding to prevent instant close
+    const timer = setTimeout(() => {
+      window.addEventListener('click', handleClickOutside);
+    }, 0);
+
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('click', handleClickOutside);
       textarea.removeEventListener('keydown', handleKeyDown);
     };

@@ -199,6 +199,13 @@ export default function AnnotatePage()
     else 
     {
       alert('Annotations saved successfully!');
+      
+      setLoadedImageIds((prev) => {
+        const next = new Set(prev);
+        next.delete(imageUrl);
+        return next;
+      });
+      
       setInitialLayers((prev) => (
       {
         ...prev,

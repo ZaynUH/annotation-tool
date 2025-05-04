@@ -2,16 +2,19 @@ import React, { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import Konva from 'konva';
 
-interface Props {
+interface Props 
+{
   textNode: Konva.Text;
   onChange: (newText: string) => void;
   onClose: () => void;
 }
 
-const TextEditor = ({ textNode, onChange, onClose }: Props) => {
+const TextEditor = ({ textNode, onChange, onClose }: Props) => 
+{
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     const textarea = textareaRef.current;
     const stage = textNode.getStage();
     if (!textarea || !stage) return;
@@ -41,40 +44,49 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
 
     textarea.focus();
 
-    const commit = () => {
+    const commit = () => 
+    {
       onChange(textarea.value);
       onClose();
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    const handleKeyDown = (e: KeyboardEvent) => 
+    {
+      if (e.key === 'Enter' && !e.shiftKey) 
+      {
         e.preventDefault();
         commit();
-      } else if (e.key === 'Escape') {
+      } else if (e.key === 'Escape') 
+      {
         onClose();
       }
     };
 
-    const handleClickOutside = (e: MouseEvent) => {
-      if (e.target !== textarea && !textarea.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => 
+    {
+      if (e.target !== textarea && !textarea.contains(e.target as Node)) 
+      {
         commit();
       }
     };
 
     textarea.addEventListener('keydown', handleKeyDown);
 
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(() => 
+    {
       window.addEventListener('click', handleClickOutside);
     });
 
-    return () => {
+    return () => 
+    {
       clearTimeout(timeout);
       window.removeEventListener('click', handleClickOutside);
       textarea.removeEventListener('keydown', handleKeyDown);
     };
   }, [textNode]);
 
-  return ReactDOM.createPortal(
+  return ReactDOM.createPortal
+  (
     <textarea ref={textareaRef} />,
     document.body
   );

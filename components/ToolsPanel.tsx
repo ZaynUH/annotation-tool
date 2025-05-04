@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import 
 { 
-  FaMousePointer, FaPencilAlt, FaSlash, FaArrowRight, FaSquare, FaCircle, FaEllipsisH, FaFont 
-} from 'react-icons/fa'; // React icons for tools
+  FaMousePointer, FaPencilAlt, FaSlash, FaArrowRight, FaSquare, FaCircle, FaEllipsisH, FaFont,
+  FaUndo, FaRedo, FaSave
+} from 'react-icons/fa'; // React icons for tools and actions
 import styles from '../styles/AnnotatePage.module.css';
 
 interface ToolsPanelProps {
@@ -118,15 +119,29 @@ export default function ToolsPanel({
           />
         </label>
 
-        {/* Undo/Redo/Save controls */}
-        <button className={styles.toolButton} onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)">
-          Undo
+        {/* Undo/Redo/Save buttons with icons and shortcuts */}
+        <button
+          className={styles.toolButton}
+          onClick={onUndo}
+          disabled={!canUndo}
+          title="Undo (Ctrl+Z)"
+        >
+          <FaUndo/>
         </button>
-        <button className={styles.toolButton} onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
-          Redo
+        <button
+          className={styles.toolButton}
+          onClick={onRedo}
+          disabled={!canRedo}
+          title="Redo (Ctrl+Shift+Z)"
+        >
+          <FaRedo/>
         </button>
-        <button className={styles.toolButton} onClick={onSave} title="Save (Ctrl+S)">
-          Save
+        <button
+          className={styles.toolButton}
+          onClick={onSave}
+          title="Save (Ctrl+S)"
+        >
+          <FaSave/>
         </button>
       </div>
     </div>

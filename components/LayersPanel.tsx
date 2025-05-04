@@ -72,13 +72,11 @@ export default function LayersPanel({ layers, setLayers }: LayersPanelProps) {
 
   return (
     <div className={styles.layers}>
-      <h2>LAYERS</h2>
+      
       <div className={styles.layerHeader}>
-        <span>X</span>
-        <span>Y</span>
-        <span>Deg</span>
+      <h2>Layers</h2>
       </div>
-      {layers.length === 0 && <p style={{ color: '#6b7280' }}>No layers yet</p>}
+      {layers.length === 0 && <p style={{ color: '#000000' }}>No layers yet</p>}
       {layers.map((layer) => (
         <div
           key={layer.id}

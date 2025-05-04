@@ -82,7 +82,7 @@ export default function UploadPage() {
   
     // Wait until localStorage is set
     localStorage.setItem('currentDeck', JSON.stringify(deck));
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
     // Optional: ensure decks list is refreshed
     const { decks: updatedDecks } = await fetchDecksByUser(user.id);
     setDecks(updatedDecks);

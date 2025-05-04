@@ -26,6 +26,7 @@ export default function UploadPage() {
   useEffect(() => {
     if (user) {
       localStorage.removeItem('imageDecks');
+      localStorage.removeItem('currentDeck');
       fetchDecksByUser(user.id).then(({ decks }) => {
         setDecks(decks);
       });

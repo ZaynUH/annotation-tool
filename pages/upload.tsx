@@ -14,6 +14,10 @@ interface Deck {
   images: string[];
 }
 
+const sanitizeFilename = (name: string) =>
+  name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
+
+
 export default function UploadPage() {
   const [deckName, setDeckName] = useState('');
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -61,7 +65,9 @@ export default function UploadPage() {
     const uploadedPaths: string[] = [];
   
     for (const file of imageFiles) {
-      const filePath = `${Date.now()}_${file.name}`;
+      const cleanName = sanitizeFilename(file.name);
+      const filePath = `${Date.now()}_${cleanName}`;
+      
       const { error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file);
@@ -71,7 +77,7 @@ export default function UploadPage() {
         continue;
       }
   
-      uploadedPaths.push(filePath);
+      uploadedPaths.push(filePath); // this is what goes into the DB
     }
   
     const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
@@ -80,21 +86,21 @@ export default function UploadPage() {
       return;
     }
   
-    // Wait until localStorage is set
     localStorage.setItem('currentDeck', JSON.stringify(deck));
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    // Optional: ensure decks list is refreshed
+  
+    // optional delay to give Supabase a moment to fully commit (can reduce later if needed)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  
     const { decks: updatedDecks } = await fetchDecksByUser(user.id);
     setDecks(updatedDecks);
   
-    // Reset form state
     setDeckName('');
     setImageFiles([]);
     setSelected(null);
   
-    // ✅ Navigate after everything else is done
     router.push('/annotate');
   };
+  
   
 
   return (

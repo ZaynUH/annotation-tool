@@ -204,16 +204,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
               if (layer.type === 'text') {
                 const [x, y] = layer.points;
-                return (
-                  <Text
-                    {...common}
-                    x={x}
-                    y={y}
-                    text={layer.text || ''}
-                    fontSize={layer.fontSize || 18}
-                    onDblClick={() => handleTextDblClick(layer)}
-                  />
-                );
               }
 
               switch (layer.type) {

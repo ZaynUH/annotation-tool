@@ -253,13 +253,14 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
             {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => 
             {
+              const sW = layer.type === 'text' ? 2 : layer.fontSize || 2;
               // Annotation State
               const common = 
               {
                 key: layer.id,
                 id: `layer-${layer.id}`,
                 stroke: layer.colour,
-                strokeWidth: layer.fontSize || 2,
+                strokeWidth: sW,
                 draggable: activeTool === 'select',
                 onClick: handleSelect,
                 onTap: handleSelect,

@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 2rem;
-  background-color: #f0f0f0; /* page background */
+  background-color: #f0f0f0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -11,7 +11,7 @@
 .card {
   width: 100%;
   max-width: 1400px;
-  background-color: #f8f8f8; /* card background */
+  background-color: #f8f8f8;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   display: flex;
@@ -19,7 +19,6 @@
   overflow: hidden;
 }
 
-/* === Header === */
 .header {
   display: flex;
   justify-content: space-between;
@@ -43,15 +42,13 @@
 }
 
 .loggedIn {
-  background-color: #10b981; /* green */
+  background-color: #10b981;
 }
 
 .loggedOut {
-  background-color: #ef4444; /* red */
+  background-color: #ef4444;
 }
 
-
-/* === Tabs === */
 .toolbar {
   display: flex;
   border: 1px solid #d1d1d1;
@@ -88,12 +85,10 @@
   background-color: #e2e2e2;
 }
 
-/* === Section panels === */
 .importSection {
-  margin: 1rem;    
+  margin: 1rem;
 }
 
-/* === Input (deck name & titles) === */
 .deckInput {
   display: block;
   width: 33%;
@@ -107,30 +102,31 @@
   color: black;
 }
 
-/* === Image grid + next arrow === */
 .gridContainer {
   position: relative;
   display: flex;
   align-items: center;
-  background-color: #e5e5e5; 
+  background-color: #e5e5e5;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   padding: 1rem;
+  overflow-x: auto;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 1rem;
-  flex: 1;
+  flex-wrap: nowrap;
 }
 
 .gridItem {
-  width: 100%;
-  aspect-ratio: 2/3;
+  flex: 0 0 auto;
+  width: 120px;
+  aspect-ratio: 2 / 3;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -143,7 +139,6 @@
   object-fit: contain;
 }
 
-/* upload cell */
 .upload {
   position: relative;
 }
@@ -160,11 +155,10 @@
   cursor: pointer;
 }
 
-/* next “>” button */
 .nextButton {
   margin-left: 0.5rem;
   width: 2.5rem;
-  aspect-ratio: 2/3;
+  aspect-ratio: 2 / 3;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
@@ -173,22 +167,23 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: black;
 }
 
-/* === Decks listing === */
+/* === Decks Grid Enhancements === */
 .decksGrid {
   display: flex;
   gap: 1rem;
-  justify-content: space-between;
-  min-height: 225px;
-  background-color: #e5e5e5; 
+  overflow-x: auto;
+  padding-bottom: 1rem;
   border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #e5e5e5;
 }
 
 .deck {
-  flex: 1;
-  background-color: #e5e5e5; /* panel bg */
+  flex: 0 0 auto;
+  width: 250px;
+  background-color: #e5e5e5;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   padding: 1rem;
@@ -198,7 +193,7 @@
 }
 
 .deckTitle {
-  width: 75%;
+  width: 100%;
   padding: 0.25rem 0.5rem;
   background-color: #fff;
   border: 1px solid #d1d1d1;
@@ -221,7 +216,7 @@
 
 .deckImg {
   width: 60px;
-  aspect-ratio: 2/3;
+  aspect-ratio: 2 / 3;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
@@ -230,7 +225,6 @@
   justify-content: center;
 }
 
-/* reuse nextButton for deck arrows */
 .deck > .nextButton {
   position: absolute;
   right: 1rem;
@@ -238,7 +232,6 @@
   transform: translateY(-50%);
   margin: 0;
 }
-
 
 .modalOverlay {
   position: fixed;
@@ -268,13 +261,6 @@
   cursor: pointer;
   background: none;
   border: none;
-}
-
-.title {
-  text-align: center;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
 }
 
 .input {
@@ -334,4 +320,3 @@
   padding: 0;
   z-index: 10;
 }
-

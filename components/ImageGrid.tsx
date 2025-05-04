@@ -16,7 +16,7 @@ export default function ImageGrid({ images, onUploadSelect, onSelect, onRemove }
 
   return (
     <div className={styles.grid}>
-      {images.slice(0, 4).map((file, idx) => {
+      {images.map((file, idx) => {
         const preview = URL.createObjectURL(file);
         return (
           <div key={idx} className={styles.gridItem} onClick={() => onSelect(file)}>

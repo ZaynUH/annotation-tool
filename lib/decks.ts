@@ -29,6 +29,52 @@ export async function createDeckWithImages(deckName: string, userId: string, ima
   return { deck };
 }
 
+export async function deleteDeck(deckId: string) {
+  // Step 1: Fetch image records for the deck
+  const { data: images, error: fetchError } = await supabase
+    .from('images')
+    .select('id, image_url')
+    .eq('deck_id', deckId);
+
+  if (fetchError) return { error: fetchError.message };
+
+  const imageIds = images.map(img => img.id);
+  const imagePaths = images.map(img => img.image_url);
+
+  // Step 2: Delete associated layers
+  if (imageIds.length > 0) {
+    const { error: layerError } = await supabase
+      .from('layers')
+      .delete()
+      .in('image_id', imageIds);
+    if (layerError) return { error: layerError.message };
+  }
+
+  // Step 3: Delete images from DB
+  const { error: imageDbError } = await supabase
+    .from('images')
+    .delete()
+    .eq('deck_id', deckId);
+  if (imageDbError) return { error: imageDbError.message };
+
+  // Step 4: Remove image files from storage
+  if (imagePaths.length > 0) {
+    const { error: storageError } = await supabase.storage
+      .from('images')
+      .remove(imagePaths);
+    if (storageError) return { error: storageError.message };
+  }
+
+  // Step 5: Delete the deck itself
+  const { error: deckError } = await supabase
+    .from('decks')
+    .delete()
+    .eq('id', deckId);
+  if (deckError) return { error: deckError.message };
+
+  return { success: true };
+}
+
 export async function fetchDecksByUser(userId: string) {
   const { data, error } = await supabase
     .from('decks')

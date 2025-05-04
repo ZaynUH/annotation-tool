@@ -46,7 +46,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       selectedId,
       setSelectedId,
       activeColour,
-      fontSize,
       pushHistory,
     } = useAnnotation();
 
@@ -168,7 +167,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           id,
           points: [pos.x, pos.y],
           text: '',
-          fontSize,
         };
         updateLayer(newLayer);
         setEditingTextId(id);
@@ -253,7 +251,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
             {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => 
             {
-              const sW = layer.type === 'text' ? 2 : layer.fontSize || 2;
+              const sW = 1;
               // Annotation State
               const common = 
               {
@@ -274,7 +272,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     x={x}
                     y={y}
                     text={layer.text || ''}
-                    fontSize={layer.fontSize || 18}
+                    fontSize={18}
                     onDblClick={() => 
                     {
                       if (activeTool === 'select') {

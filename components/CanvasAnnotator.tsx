@@ -265,13 +265,17 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 onClick: handleSelect,
                 onTap: handleSelect,
 
-                onTransformEnd: (e: any) => {
+                onTransformEnd: (e: Konva.KonvaEventObject<Event>) => 
+                {
                   const node = e.target;
                   const id = parseInt(node.id().replace('layer-', ''), 10);
                   const updated = [...(layers[currentIndex] || [])];
                   const index = updated.findIndex(l => l.id === id);
                   if (index === -1) return;
-
+                
+                  const scaleX = node.scaleX();
+                  const scaleY = node.scaleY();
+                
                   const shape = updated[index];
                   if (shape.type === 'rectangle') {
                     updated[index] = {
@@ -279,27 +283,42 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                       points: [
                         node.x(),
                         node.y(),
-                        node.width() * node.scaleX(),
-                        node.height() * node.scaleY()
+                        node.width() * scaleX,
+                        node.height() * scaleY
                       ],
                     };
-                  } else if (shape.type === 'circle' || shape.type === 'ellipse') {
-                    updated[index] = {
+                  } 
+                  else if (shape.type === 'circle' || shape.type === 'ellipse') 
+                  {
+                    const ellipseNode = node as Konva.Ellipse; // or Circle — both share radiusX/Y
+                    updated[index] = 
+                    {
                       ...shape,
                       points: [
-                        node.x(),
-                        node.y(),
-                        node.radiusX() * node.scaleX(),
-                        node.radiusY() * node.scaleY(),
+                        ellipseNode.x(),
+                        ellipseNode.y(),
+                        ellipseNode.radiusX() * scaleX,
+                        ellipseNode.radiusY() * scaleY,
                       ],
                     };
-                  } else if (shape.type === 'line' || shape.type === 'arrow') {
-                    updated[index].points = node.points();
+                  } 
+                  else if (shape.type === 'line' || shape.type === 'arrow') 
+                  {
+                    const lineNode = node as Konva.Line; 
+                    updated[index] = 
+                    {
+                      ...shape,
+                      points: lineNode.points(),
+                    };
                   }
-
+                  else if (shape.type === 'text') 
+                  {
+                    updated[index].points = [node.x(), node.y()];
+                  }
+                
                   node.scaleX(1);
                   node.scaleY(1);
-
+                
                   setLayers(prev => ({
                     ...prev,
                     [currentIndex]: updated,

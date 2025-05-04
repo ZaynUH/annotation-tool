@@ -14,6 +14,8 @@ interface Layer {
   type: string;
   colour: string;
   points: number[];
+  text?: string;
+  fontSize?: number;
 }
 
 export default function ExportPage() {
@@ -31,35 +33,50 @@ export default function ExportPage() {
   }, []);
 
   useEffect(() => {
-    const fetchAnnotations = async () => {
-      if (!user || !deck) return;
+    const loadAnnotations = async () => {
+      if (!deck) return;
 
-      for (const imageUrl of deck.images) {
-        const filePath = imageUrl.split('/').pop();
+      if (user) {
+        // Logged-in user: fetch from Supabase
+        for (const imageUrl of deck.images) {
+          const filePath = imageUrl.split('/').pop();
 
-        const { data: imageRecord } = await supabase
-          .from('images')
-          .select('id')
-          .eq('image_url', filePath)
-          .single();
+          const { data: imageRecord } = await supabase
+            .from('images')
+            .select('id')
+            .eq('image_url', filePath)
+            .single();
 
-        if (!imageRecord) continue;
+          if (!imageRecord) continue;
 
-        const { data: layerData } = await supabase
-          .from('layers')
-          .select('*')
-          .eq('image_id', imageRecord.id);
+          const { data: layerData } = await supabase
+            .from('layers')
+            .select('*')
+            .eq('image_id', imageRecord.id);
 
-        if (layerData) {
-          setAnnotations((prev) => ({
-            ...prev,
-            [imageUrl]: layerData,
-          }));
+          if (layerData) {
+            setAnnotations((prev) => ({
+              ...prev,
+              [imageUrl]: layerData,
+            }));
+          }
+        }
+      } else {
+        // Guest: pull from localStorage
+        const key = `layers_${deck.name}`;
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw); // { [index]: Layer[] }
+          const map: Record<string, Layer[]> = {};
+          deck.images.forEach((img, i) => {
+            map[img] = parsed[i] || [];
+          });
+          setAnnotations(map);
         }
       }
     };
 
-    fetchAnnotations();
+    loadAnnotations();
   }, [deck, user]);
 
   const toggleImage = (img: string) => {
@@ -84,11 +101,12 @@ export default function ExportPage() {
 
       for (const layer of layers) {
         ctx.strokeStyle = layer.colour;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
+        ctx.fillStyle = layer.colour;
+        ctx.lineWidth = layer.fontSize || 2;
 
         switch (layer.type) {
           case 'pen':
+            ctx.beginPath();
             ctx.moveTo(layer.points[0], layer.points[1]);
             for (let i = 2; i < layer.points.length; i += 2) {
               ctx.lineTo(layer.points[i], layer.points[i + 1]);
@@ -97,6 +115,7 @@ export default function ExportPage() {
             break;
           case 'line':
           case 'arrow':
+            ctx.beginPath();
             ctx.moveTo(layer.points[0], layer.points[1]);
             ctx.lineTo(layer.points[2], layer.points[3]);
             ctx.stroke();
@@ -120,6 +139,24 @@ export default function ExportPage() {
             );
             ctx.stroke();
             break;
+          case 'ellipse':
+            ctx.beginPath();
+            ctx.ellipse(
+              layer.points[0],
+              layer.points[1],
+              layer.points[2],
+              layer.points[3],
+              0,
+              0,
+              2 * Math.PI
+            );
+            ctx.stroke();
+            break;
+          case 'text':
+            const [x, y] = layer.points;
+            ctx.font = `${layer.fontSize || 18}px sans-serif`;
+            ctx.fillText(layer.text || '', x, y);
+            break;
           default:
             break;
         }
@@ -131,7 +168,7 @@ export default function ExportPage() {
     selectedImages.forEach((img) => {
       const canvas = exportRefs.current[img];
       if (canvas) {
-        drawAnnotations(canvas, img); // Ensure fresh render
+        drawAnnotations(canvas, img);
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
         a.download = 'annotated-image.png';

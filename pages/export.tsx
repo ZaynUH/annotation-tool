@@ -4,13 +4,15 @@ import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/ExportPage.module.css';
 
-interface Deck {
+interface Deck 
+{
   id?: string;
   name: string;
   images: string[];
 }
 
-interface Layer {
+interface Layer 
+{
   type: string;
   colour: string;
   points: number[];
@@ -18,27 +20,35 @@ interface Layer {
   fontSize?: number;
 }
 
-export default function ExportPage() {
-  const [deck, setDeck] = useState<Deck | null>(null);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [annotations, setAnnotations] = useState<Record<string, Layer[]>>({});
-  const exportRefs = useRef<Record<string, HTMLCanvasElement>>({});
+export default function ExportPage() 
+{
+  const [deck, setDeck] = useState<Deck | null>(null); // Current deck
+  const [selectedImages, setSelectedImages] = useState<string[]>([]); // Selected images to export
+  const [annotations, setAnnotations] = useState<Record<string, Layer[]>>({}); // Annotations per image
+  const exportRefs = useRef<Record<string, HTMLCanvasElement>>({}); // Canvas refs for rendering
   const { user } = useUser();
 
-  useEffect(() => {
+  // Load current deck from localStorage
+  useEffect(() => 
+  {
     const stored = localStorage.getItem('currentDeck');
-    if (stored) {
+    if (stored) 
+    {
       setDeck(JSON.parse(stored));
     }
   }, []);
 
+  // Load annotations either from Supabase or localStorage
   useEffect(() => {
-    const loadAnnotations = async () => {
+    const loadAnnotations = async () => 
+    {
       if (!deck) return;
 
-      if (user) {
-        // Logged-in user: fetch from Supabase
-        for (const imageUrl of deck.images) {
+      if (user) 
+      {
+        // Logged-in user: fetch layers from Supabase
+        for (const imageUrl of deck.images) 
+        {
           const filePath = imageUrl.split('/').pop();
 
           const { data: imageRecord } = await supabase
@@ -54,21 +64,26 @@ export default function ExportPage() {
             .select('*')
             .eq('image_id', imageRecord.id);
 
-          if (layerData) {
+          if (layerData) 
+          {
             setAnnotations((prev) => ({
               ...prev,
               [imageUrl]: layerData,
             }));
           }
         }
-      } else {
-        // Guest: pull from localStorage
+      } 
+      else 
+      {
+        // Guest: use localStorage
         const key = `layers_${deck.name}`;
         const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw); // { [index]: Layer[] }
+        if (raw) 
+        {
+          const parsed = JSON.parse(raw); // Layers stored per image index
           const map: Record<string, Layer[]> = {};
-          deck.images.forEach((img, i) => {
+          deck.images.forEach((img, i) => 
+          {
             map[img] = parsed[i] || [];
           });
           setAnnotations(map);
@@ -79,13 +94,17 @@ export default function ExportPage() {
     loadAnnotations();
   }, [deck, user]);
 
-  const toggleImage = (img: string) => {
+  // Toggle image selection on click
+  const toggleImage = (img: string) => 
+  {
     setSelectedImages((prev) =>
       prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
-  const drawAnnotations = (canvas: HTMLCanvasElement, imageUrl: string) => {
+  // Render image + its annotations on the given canvas
+  const drawAnnotations = (canvas: HTMLCanvasElement, imageUrl: string) => 
+  {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -99,12 +118,14 @@ export default function ExportPage() {
 
       const layers = annotations[imageUrl] || [];
 
-      for (const layer of layers) {
+      for (const layer of layers) 
+      {
         ctx.strokeStyle = layer.colour;
         ctx.fillStyle = layer.colour;
         ctx.lineWidth = layer.fontSize || 2;
 
-        switch (layer.type) {
+        switch (layer.type) 
+        {
           case 'pen':
             ctx.beginPath();
             ctx.moveTo(layer.points[0], layer.points[1]);
@@ -164,11 +185,14 @@ export default function ExportPage() {
     };
   };
 
-  const handleExport = () => {
-    selectedImages.forEach((img) => {
+  // Export selected images as PNG
+  const handleExport = () => 
+  {
+    selectedImages.forEach((img) => 
+    {
       const canvas = exportRefs.current[img];
       if (canvas) {
-        drawAnnotations(canvas, img);
+        drawAnnotations(canvas, img); // Ensure canvas is rendered first
         const a = document.createElement('a');
         a.href = canvas.toDataURL('image/png');
         a.download = 'annotated-image.png';
@@ -182,8 +206,9 @@ export default function ExportPage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <h1 className={styles.title}>Image Annotation Tool</h1>
-        <Toolbar />
+        <Toolbar/> {/* Nav bar at the top */}
 
+        {/* Deck name and image selector */}
         <div className={styles.section}>
           <input
             className={styles.deckName}
@@ -211,20 +236,24 @@ export default function ExportPage() {
             )}
           </div>
         </div>
+
+        {/* Export preview and canvas rendering */}
         <div className={`${styles.section} ${styles.noTopMargin}`}>
           <input className={styles.deckName} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRowPreview}>
             {selectedImages.map((img, index) => (
               <canvas
                 key={index}
-                ref={(el) => {
-                  if (el) {
-                    exportRefs.current[img] = el;
-                    drawAnnotations(el, img);
+                ref={(elem) => 
+                {
+                  if (elem) 
+                  {
+                    exportRefs.current[img] = elem;
+                    drawAnnotations(elem, img); // Draw immediately when rendered
                   }
                 }}
-                width={200}
-                height={300}
+                width={400}
+                height={600}
                 className={styles.exportCanvas}
               />
             ))}

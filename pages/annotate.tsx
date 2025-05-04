@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Toolbar from '../components/Toolbar';
+import Toolbar from '../components/Navbar';
 import ToolsPanel from '../components/ToolsPanel';
 import ImagePanel from '../components/ImagePanel';
 import LayersPanel from '../components/LayersPanel';

@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import styles from '../styles/UploadPage.module.css';
 
-interface ToolbarProps {
+interface NavbarProps {
   disableTabs?: {
     annotate?: boolean;
     export?: boolean;
   };
 }
 
-const Toolbar = ({ disableTabs = {} }: ToolbarProps) => {
+const Navbar = ({ disableTabs = {} }: NavbarProps) => {
   return (
-    <div className={styles.toolbar}>
+    <div className={styles.navbar}>
       <Link href="/upload" className={styles.tab}>Import</Link>
 
       {disableTabs.annotate ? (
@@ -28,4 +28,4 @@ const Toolbar = ({ disableTabs = {} }: ToolbarProps) => {
   );
 };
 
-export default Toolbar;
+export default Navbar;

@@ -33,6 +33,8 @@
   color: black;
 }
 
+/*  Profile Cirlcle  */
+
 .profileCircle {
   width: 1.5rem;
   height: 1.5rem;
@@ -49,7 +51,9 @@
   background-color: #ef4444;
 }
 
-.toolbar {
+/*  Navbar  */
+
+.navbar {
   display: flex;
   border: 1px solid #d1d1d1;
   margin: 0 1rem;
@@ -85,9 +89,13 @@
   background-color: #e2e2e2;
 }
 
+/*  Import and Deck Section  */
+
 .importSection {
   margin: 1rem;
 }
+
+/*  Import Grid  */
 
 .deckInput {
   display: block;
@@ -139,10 +147,6 @@
   object-fit: contain;
 }
 
-.upload {
-  position: relative;
-}
-
 .plus {
   font-size: 2rem;
   color: #a0a0a0;
@@ -169,7 +173,29 @@
   cursor: pointer;
 }
 
-/* === Decks Grid Enhancements === */
+.removeButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+}
+
+/*  Decks Grid  */
+
 .decksGrid {
   display: flex;
   gap: 1rem;
@@ -225,13 +251,7 @@
   justify-content: center;
 }
 
-.deck > .nextButton {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0;
-}
+/*  Profile Modal  */
 
 .modalOverlay {
   position: fixed;
@@ -282,7 +302,7 @@
   justify-content: space-between;
 }
 
-.primaryButton {
+.submitButton {
   padding: 0.5rem 1rem;
   background-color: #3b82f6;
   color: white;
@@ -291,32 +311,11 @@
   cursor: pointer;
 }
 
-.secondaryButton {
+.switchButton {
   padding: 0.5rem 1rem;
   border: 1px solid #3b82f6;
   color: #3b82f6;
   background-color: transparent;
   border-radius: 4px;
   cursor: pointer;
-}
-
-.removeButton {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  line-height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  z-index: 10;
 }

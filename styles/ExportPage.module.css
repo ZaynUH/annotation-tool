@@ -27,11 +27,19 @@
   color: black;
 }
 
+/*  Sections  */
+
 .section {
   margin: 1rem;
 }
 
-.deckInput {
+.noTopMargin {
+  margin-top: 0;
+}
+
+/*  Current Deck  */
+
+.deckName {
   display: block;
   width: 33%;
   padding: 0.5rem;
@@ -43,7 +51,6 @@
   color: black;
 }
 
-/* Scrollable deck layout */
 .decksGrid {
   display: flex;
   overflow-x: auto;
@@ -95,7 +102,8 @@
   border: 2px solid #3b82f6;
 }
 
-/* Export preview canvas row */
+/*  Export Preview Deck  */
+
 .deckRowPreview {
   display: flex;
   overflow-x: auto;
@@ -124,9 +132,5 @@
   border: 1px solid #000;
   cursor: pointer;
   color: black;
-}
-
-.noTopMargin {
-  margin-top: 0;
 }
 

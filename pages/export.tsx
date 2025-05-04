@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Toolbar from '../components/Toolbar';
+import Toolbar from '../components/Navbar';
 import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/ExportPage.module.css';
@@ -186,7 +186,7 @@ export default function ExportPage() {
 
         <div className={styles.section}>
           <input
-            className={styles.deckInput}
+            className={styles.deckName}
             type="text"
             value={deck?.name || ''}
             readOnly
@@ -212,7 +212,7 @@ export default function ExportPage() {
           </div>
         </div>
         <div className={`${styles.section} ${styles.noTopMargin}`}>
-          <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
+          <input className={styles.deckName} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRowPreview}>
             {selectedImages.map((img, idx) => (
               <canvas

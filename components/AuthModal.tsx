@@ -60,11 +60,11 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.buttonRow}>
-          <button className={styles.primaryButton} onClick={handleSubmit}>
+          <button className={styles.submitButton} onClick={handleSubmit}>
             {mode === 'login' ? 'Login' : 'Sign Up'}
           </button>
           <button
-            className={styles.secondaryButton}
+            className={styles.switchButton}
             onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
           >
             {mode === 'login' ? 'Need an account?' : 'Already have an account?'}

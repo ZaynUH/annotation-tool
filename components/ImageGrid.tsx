@@ -33,7 +33,7 @@ export default function ImageGrid({ images, onUploadSelect, onSelect, onRemove }
           </div>
         );
       })}
-      <label className={`${styles.gridItem} ${styles.upload}`}>
+      <label className={styles.gridItem}>
         <span className={styles.plus}>+</span>
         <input
           type="file"

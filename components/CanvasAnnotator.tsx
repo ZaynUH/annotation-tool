@@ -54,7 +54,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [editingTextId, setEditingTextId] = useState<number | null>(null);
-    const [activeEditorNode, setActiveEditorNode] = useState<Konva.Text | null>(null);
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
@@ -82,7 +81,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       const transformable = nodes.filter(node => {
         const id = Number(node.id().replace('layer-', ''));
         const l = currentLayers.find(l => l.id === id);
-        return l && !['line', 'arrow', 'text'].includes(l.type);
+        return l && !['line', 'arrow'].includes(l.type);
       });
       transformerRef.current.nodes(transformable);
       transformerRef.current.getLayer()?.batchDraw();
@@ -195,17 +194,13 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 id: `layer-${layer.id}`,
                 stroke: layer.colour,
                 strokeWidth: layer.fontSize || 2,
-                draggable: activeTool === 'select' || layer.type === 'text',
-                onDragEnd: () => {},
-                onTransformEnd: () => {},
+                draggable: activeTool === 'select',
                 onClick: handleSelect,
                 onTap: handleSelect,
               };
 
               if (layer.type === 'text') {
                 const [x, y] = layer.points;
-                const isEditing = editingTextId === layer.id;
-
                 return (
                   <Text
                     {...common}
@@ -213,13 +208,9 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     y={y}
                     text={layer.text || ''}
                     fontSize={layer.fontSize || 18}
-                    fill={layer.colour}
-                    width={200}
-                    visible={!isEditing}
-                    onDblClick={() => setEditingTextId(layer.id)}
-                    ref={(node) => {
-                      if (node && isEditing) {
-                        setTimeout(() => setActiveEditorNode(node));
+                    onDblClick={() => {
+                      if (activeTool === 'select') {
+                        setEditingTextId(layer.id);
                       }
                     }}
                   />
@@ -248,20 +239,25 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           </KonvaLayer>
         </Stage>
 
-        {editingTextId !== null && activeEditorNode && (
-          <TextEditor
-            textNode={activeEditorNode}
-            onChange={(newText) => {
-              setLayers(prev => {
-                const updated = [...(prev[currentIndex] || [])];
-                const idx = updated.findIndex(l => l.id === editingTextId);
-                if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
-                return { ...prev, [currentIndex]: updated };
-              });
-            }}
-            onClose={() => setEditingTextId(null)}
-          />
-        )}
+        {editingTextId !== null && (() => {
+          const textLayer = currentLayers.find(l => l.id === editingTextId);
+          const node = stageRef.current?.findOne(`#layer-${editingTextId}`);
+          if (!textLayer || !node || !(node instanceof Konva.Text)) return null;
+          return (
+            <TextEditor
+              textNode={node}
+              onChange={(newText: string) => {
+                setLayers(prev => {
+                  const updated = [...(prev[currentIndex] || [])];
+                  const idx = updated.findIndex(l => l.id === editingTextId);
+                  if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+                  return { ...prev, [currentIndex]: updated };
+                });
+              }}
+              onClose={() => setEditingTextId(null)}
+            />
+          );
+        })()}
       </div>
     );
   }

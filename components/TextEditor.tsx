@@ -10,7 +10,6 @@ interface Props {
 
 const TextEditor = ({ textNode, onChange, onClose }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -25,7 +24,7 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.position = 'absolute';
     textarea.style.top = `${stageBox.top + textPosition.y}px`;
     textarea.style.left = `${stageBox.left + textPosition.x}px`;
-    textarea.style.fontSize = `${textNode.fontSize() * scale.x}px`;
+    textarea.style.fontSize = `${textNode.fontSize()}px`;
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();
     const fill = textNode.fill();
@@ -55,14 +54,13 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (e.target !== textarea) {
+      if (e.target !== textarea && !textarea.contains(e.target as Node)) {
         commit();
       }
     };
 
     textarea.addEventListener('keydown', handleKeyDown);
 
-    // ✅ Delay click listener so the initial canvas click doesn't immediately close the textarea
     const timeout = setTimeout(() => {
       window.addEventListener('click', handleClickOutside);
     });
@@ -74,13 +72,9 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     };
   }, [textNode]);
 
-  if (!containerRef.current) {
-    containerRef.current = document.body;
-  }
-
   return ReactDOM.createPortal(
     <textarea ref={textareaRef} />,
-    containerRef.current
+    document.body
   );
 };
 

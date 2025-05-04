@@ -145,10 +145,8 @@ export default function UploadPage() {
                   className={styles.deckRow}
                   onClick={async () => {
                     localStorage.setItem('currentDeck', JSON.stringify(deck));
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    router.push('/annotate');
+                    await router.push('/annotate');
                   }}
-                  
                 >
                   {deck.images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className={styles.deckImg}>

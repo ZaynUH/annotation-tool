@@ -143,9 +143,9 @@ export default function UploadPage() {
                 <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div
                   className={styles.deckRow}
-                  onClick={async () => {
+                  onClick={() => {
                     localStorage.setItem('currentDeck', JSON.stringify(deck));
-                    await router.push('/annotate');
+                    router.push('/annotate');
                   }}
                 >
                   {deck.images.slice(0, 4).map((img, idx) => (

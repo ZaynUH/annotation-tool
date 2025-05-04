@@ -12,7 +12,6 @@ import {
   Line,
   Arrow,
   Rect,
-  Circle,
   Ellipse,
   Transformer,
   Text,
@@ -193,7 +192,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 key: layer.id,
                 id: `layer-${layer.id}`,
                 stroke: layer.colour,
-                strokeWidth: layer.fontSize || 2,
+                strokeWidth: 2,
                 draggable: activeTool === 'select',
                 onClick: handleSelect,
                 onTap: handleSelect,
@@ -207,7 +206,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     x={x}
                     y={y}
                     text={layer.text || ''}
-                    fontSize={layer.fontSize || 18}
+                    fontSize={5}
                     onDblClick={() => {
                       if (activeTool === 'select') {
                         setEditingTextId(layer.id);

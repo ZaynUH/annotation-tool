@@ -28,7 +28,7 @@ export default function ImageGrid({ images, onUploadSelect, onSelect, onRemove }
                 onRemove(file);
               }}
             >
-              ✕
+              X
             </button>
           </div>
         );

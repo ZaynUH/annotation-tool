@@ -34,6 +34,8 @@ interface CanvasAnnotatorProps
   layers?: Layer[];
 }
 
+// ... all imports and interface stay unchanged
+
 const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
   ({ imageUrl, width = 450, height = 600, previewOnly = false, layers: previewLayers = [] }, ref) => {
     
@@ -119,20 +121,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       {
         const next = [...(prev[currentIndex] || []), newLayer];
         return { ...prev, [currentIndex]: next };
-      });
-    };
-
-    const updateLayerPosition = (id: number, newPoints: number[]) => 
-    {
-      setLayers(prev => 
-      {
-        const updated = [...(prev[currentIndex] || [])];
-        const index = updated.findIndex(l => l.id === id);
-        if (index !== -1) 
-        {
-          updated[index] = { ...updated[index], points: newPoints };
-        }
-        return { ...prev, [currentIndex]: updated };
       });
     };
 
@@ -276,23 +264,69 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 draggable: activeTool === 'select',
                 onClick: handleSelect,
                 onTap: handleSelect,
-                onDragEnd: (e: any) => 
-                {
+
+                onTransformEnd: (e: any) => {
                   const node = e.target;
-                  if (layer.type === 'text') 
-                  {
-                    updateLayerPosition(layer.id, [node.x(), node.y()]);
+                  const id = parseInt(node.id().replace('layer-', ''), 10);
+                  const updated = [...(layers[currentIndex] || [])];
+                  const index = updated.findIndex(l => l.id === id);
+                  if (index === -1) return;
+
+                  const shape = updated[index];
+                  if (shape.type === 'rectangle') {
+                    updated[index] = {
+                      ...shape,
+                      points: [
+                        node.x(),
+                        node.y(),
+                        node.width() * node.scaleX(),
+                        node.height() * node.scaleY()
+                      ],
+                    };
+                  } else if (shape.type === 'circle' || shape.type === 'ellipse') {
+                    updated[index] = {
+                      ...shape,
+                      points: [
+                        node.x(),
+                        node.y(),
+                        node.radiusX() * node.scaleX(),
+                        node.radiusY() * node.scaleY(),
+                      ],
+                    };
+                  } else if (shape.type === 'line' || shape.type === 'arrow') {
+                    updated[index].points = node.points();
                   }
+
+                  node.scaleX(1);
+                  node.scaleY(1);
+
+                  setLayers(prev => ({
+                    ...prev,
+                    [currentIndex]: updated,
+                  }));
                 },
-                onTransformEnd: (e: any) => 
-                {
+
+                onDragEnd: (e: any) => {
                   const node = e.target;
-                  if (layer.type === 'text') 
-                  {
-                    updateLayerPosition(layer.id, [node.x(), node.y()]);
+                  const id = parseInt(node.id().replace('layer-', ''), 10);
+                  const updated = [...(layers[currentIndex] || [])];
+                  const index = updated.findIndex(l => l.id === id);
+                  if (index === -1) return;
+
+                  const shape = updated[index];
+
+                  if (shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'ellipse' || shape.type === 'text') {
+                    updated[index].points[0] = node.x();
+                    updated[index].points[1] = node.y();
                   }
+
+                  setLayers(prev => ({
+                    ...prev,
+                    [currentIndex]: updated,
+                  }));
                 }
               };
+
               if (layer.type === 'text') 
               {
                 const [x, y] = layer.points;

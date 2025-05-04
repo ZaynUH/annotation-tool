@@ -24,7 +24,6 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.position = 'absolute';
     textarea.style.top = `${stageBox.top + textPosition.y}px`;
     textarea.style.left = `${stageBox.left + textPosition.x}px`;
-    textarea.style.width = `${textNode.width()}px`;
     textarea.style.fontSize = `${textNode.fontSize()}px`;
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();

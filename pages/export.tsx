@@ -211,7 +211,7 @@ export default function ExportPage() {
             )}
           </div>
         </div>
-        <div className={styles.section}>
+        <div className={`${styles.section} ${styles.noTopMargin}`}>
           <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRowPreview}>
             {selectedImages.map((img, idx) => (

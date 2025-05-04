@@ -25,14 +25,11 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (user) {
-      localStorage.removeItem('imageDecks');
-      localStorage.removeItem('currentDeck');
       fetchDecksByUser(user.id).then(({ decks }) => {
         setDecks(decks);
       });
     } else {
-      const stored = localStorage.getItem('imageDecks');
-      if (stored) setDecks(JSON.parse(stored));
+      setDecks([]); // Guests see no decks
     }
   }, [user]);
 
@@ -53,21 +50,16 @@ export default function UploadPage() {
       return;
     }
 
-    let uploadedPaths: string[] = [];
-
     if (user) {
+      const uploadedPaths: string[] = [];
+
       for (const file of imageFiles) {
         const filePath = `${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
+        const { error } = await supabase.storage
           .from('images')
           .upload(filePath, file);
 
-        if (uploadError) {
-          console.error('Upload failed:', uploadError.message);
-          continue;
-        }
-
-        uploadedPaths.push(filePath); // store the storage path
+        if (!error) uploadedPaths.push(filePath);
       }
 
       const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
@@ -79,12 +71,10 @@ export default function UploadPage() {
       localStorage.setItem('currentDeck', JSON.stringify(deck));
       fetchDecksByUser(user.id).then(({ decks }) => setDecks(decks));
     } else {
+      // Guest: create a temporary deck, no saving
       const previewUrls = imageFiles.map((file) => URL.createObjectURL(file));
-      const newDeck = { name: trimmedName, images: previewUrls };
-      const updated = [...decks, newDeck];
-      localStorage.setItem('imageDecks', JSON.stringify(updated));
-      localStorage.setItem('currentDeck', JSON.stringify(newDeck));
-      setDecks(updated);
+      const tempDeck = { name: trimmedName, images: previewUrls };
+      localStorage.setItem('currentDeck', JSON.stringify(tempDeck));
     }
 
     setDeckName('');
@@ -98,7 +88,7 @@ export default function UploadPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <h1 className={styles.title}>Image Annotation Tool</h1>
-          <div 
+          <div
             className={`${styles.profileCircle} ${user ? styles.loggedIn : styles.loggedOut}`}
             onClick={async () => {
               if (user) {
@@ -106,15 +96,14 @@ export default function UploadPage() {
                 if (confirmLogout) {
                   await supabase.auth.signOut();
                   localStorage.removeItem('currentDeck');
-                  router.reload(); // reload the page to update state
+                  router.reload();
                 }
               } else {
                 setShowModal(true);
               }
             }}
-          title={user ? `Logged in as ${user.email}` : 'Click to log in'}
-        />
-
+            title={user ? `Logged in as ${user.email}` : 'Click to log in'}
+          />
         </div>
 
         <Toolbar disableTabs={{ annotate: true, export: true }} />
@@ -140,29 +129,40 @@ export default function UploadPage() {
           </div>
         </div>
 
-        <div className={styles.importSection}>
-          <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
-          <div className={styles.decksGrid}>
-            {decks.map((deck, index) => (
-              <div key={index} className={styles.deck}>
-                <input className={styles.deckTitle} value={deck.name} readOnly />
-                <div
-                  className={styles.deckRow}
-                  onClick={() => {
-                    localStorage.setItem('currentDeck', JSON.stringify(deck));
-                    router.push('/annotate');
-                  }}
-                >
-                  {deck.images.slice(0, 4).map((img, idx) => (
-                    <div key={idx} className={styles.deckImg}>
-                      <img src={img} className={styles.gridImage} />
-                    </div>
-                  ))}
+        {user && (
+          <div className={styles.importSection}>
+            <input className={styles.deckInput} type="text" value="Your Decks" readOnly />
+            <div className={styles.decksGrid}>
+              {decks.map((deck, index) => (
+                <div key={index} className={styles.deck}>
+                  <input className={styles.deckTitle} value={deck.name} readOnly />
+                  <div
+                    className={styles.deckRow}
+                    onClick={() => {
+                      localStorage.setItem('currentDeck', JSON.stringify(deck));
+                      router.push('/annotate');
+                    }}
+                  >
+                    {deck.images.slice(0, 4).map((img, idx) => (
+                      <div key={idx} className={styles.deckImg}>
+                        <img src={img} className={styles.gridImage} />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className={styles.nextButton}
+                    onClick={() => {
+                      localStorage.setItem('currentDeck', JSON.stringify(deck));
+                      router.push('/annotate');
+                    }}
+                  >
+                    &gt;
+                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {showModal && (

@@ -81,7 +81,7 @@ export default function UploadPage() {
     }
   
     // Wait until localStorage is set
-    localStorage.setItem('currentDeck', JSON.stringify(deck));
+    await localStorage.setItem('currentDeck', JSON.stringify(deck));
   
     // Optional: ensure decks list is refreshed
     const { decks: updatedDecks } = await fetchDecksByUser(user.id);
@@ -93,7 +93,7 @@ export default function UploadPage() {
     setSelected(null);
   
     // ✅ Navigate after everything else is done
-    await router.push('/annotate');
+    router.push('/annotate');
   };
   
 

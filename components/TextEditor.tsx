@@ -21,22 +21,30 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     const scale = textNode.getAbsoluteScale();
 
     textarea.value = textNode.text();
+
+    const absPos = textNode.absolutePosition();
+    
     textarea.style.position = 'absolute';
-    textarea.style.top = `${stageBox.top + textPosition.y}px`;
-    textarea.style.left = `${stageBox.left + textPosition.x}px`;
+    textarea.style.top = `${absPos.y}px`;
+    textarea.style.left = `${absPos.x}px`;
+    textarea.style.width = `${textNode.width() - textNode.padding() * 2}px`;
+    textarea.style.height = `${textNode.height() - textNode.padding() * 2 + 5}px`;
     textarea.style.fontSize = `${textNode.fontSize()}px`;
-    textarea.style.lineHeight = `${textNode.lineHeight()}`;
-    textarea.style.fontFamily = textNode.fontFamily();
-    const fill = textNode.fill();
-    textarea.style.color = typeof fill === 'string' ? fill : '#000';
-    textarea.style.background = 'transparent';
-    textarea.style.border = '1px dashed #999';
+    textarea.style.border = 'none';
     textarea.style.padding = '0px';
     textarea.style.margin = '0px';
+    textarea.style.overflow = 'hidden';
+    textarea.style.background = 'none';
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
-    textarea.style.zIndex = '1000';
-
+    textarea.style.lineHeight = `${textNode.lineHeight()}`; // fixed here
+    textarea.style.fontFamily = textNode.fontFamily();
+    textarea.style.transformOrigin = 'left top';
+    textarea.style.textAlign = textNode.align();
+    
+    const fill = textNode.fill();
+    textarea.style.color = typeof fill === 'string' ? fill : '#000';
+    
     textarea.focus();
 
     const commit = () => {

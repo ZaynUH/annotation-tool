@@ -36,6 +36,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       layers,
       setLayers,
       activeTool,
+      setActiveTool,
       selectedId,
       setSelectedId,
       activeColour,
@@ -73,16 +74,20 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     }, []);
 
     useEffect(() => {
-      if (!transformerRef.current) return;
+      // Sync selectedId with Transformer
+      if (selectedId !== null) {
+        setSelectedIds([selectedId]);
+      } else {
+        setSelectedIds([]);
+      }
+    }, [selectedId]);
+
+    useEffect(() => {
+      if (!transformerRef.current || !stageRef.current) return;
       const nodes = selectedIds
         .map(id => stageRef.current.findOne(`#layer-${id}`))
         .filter(Boolean);
-      const transformable = nodes.filter(node => {
-        const id = Number(node.id().replace('layer-', ''));
-        const l = currentLayers.find(l => l.id === id);
-        return l && !['line', 'arrow'].includes(l.type);
-      });
-      transformerRef.current.nodes(transformable);
+      transformerRef.current.nodes(nodes);
       transformerRef.current.getLayer()?.batchDraw();
     }, [selectedIds, currentLayers]);
 

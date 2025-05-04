@@ -195,9 +195,9 @@ export default function ExportPage() {
             {deck && (
               <div className={styles.deck}>
                 <div className={styles.deckRow}>
-                  {deck.images.map((img, idx) => (
+                  {deck.images.map((img, index) => (
                     <div
-                      key={idx}
+                      key={index}
                       className={`${styles.deckImg} ${
                         selectedImages.includes(img) ? styles.selected : ''
                       }`}
@@ -214,9 +214,9 @@ export default function ExportPage() {
         <div className={`${styles.section} ${styles.noTopMargin}`}>
           <input className={styles.deckName} type="text" value="Export Preview" readOnly />
           <div className={styles.deckRowPreview}>
-            {selectedImages.map((img, idx) => (
+            {selectedImages.map((img, index) => (
               <canvas
-                key={idx}
+                key={index}
                 ref={(el) => {
                   if (el) {
                     exportRefs.current[img] = el;

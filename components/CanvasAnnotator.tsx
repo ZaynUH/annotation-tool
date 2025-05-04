@@ -323,8 +323,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 setLayers(prev => 
                 {
                   const updated = [...(prev[currentIndex] || [])];
-                  const idx = updated.findIndex(l => l.id === editingTextId);
-                  if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+                  const index = updated.findIndex(l => l.id === editingTextId);
+                  if (index !== -1) updated[index] = { ...updated[index], text: newText };
                   
                   return { ...prev, [currentIndex]: updated };
                 });

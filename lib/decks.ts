@@ -75,7 +75,8 @@ export async function deleteDeck(deckId: string) {
   return { success: true };
 }
 
-export async function fetchDecksByUser(userId: string) {
+export async function fetchDecksByUser(userId: string) 
+{
   const { data, error } = await supabase
     .from('decks')
     .select('id, name, images (image_url, index)')
@@ -84,7 +85,8 @@ export async function fetchDecksByUser(userId: string) {
 
   if (error) return { error: error.message, decks: [] };
 
-  const decks = data.map((deck) => {
+  const decks = data.map((deck) => 
+  {
     const sortedImages = (deck.images || [])
       .sort((a, b) => a.index - b.index)
       .map((img) => `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${img.image_url}`);

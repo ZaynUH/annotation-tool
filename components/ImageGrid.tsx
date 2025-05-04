@@ -37,7 +37,6 @@ export default function ImageGrid({ images, onUploadSelect, onSelect, onRemove }
           </div>
         );
       })}
-      {/* Upload button with file input */}
       <label className={styles.gridItem}>
         <span className={styles.plus}>+</span>
         <input

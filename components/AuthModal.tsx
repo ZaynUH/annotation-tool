@@ -3,22 +3,26 @@ import { loginUser, signUpUser } from '../lib/auth';
 import { useUser } from '../context/UserContext';
 import styles from '../styles/UploadPage.module.css'; // or your modal styles
 
-interface AuthModalProps {
+interface AuthModalProps 
+{
   onClose: () => void;
   onSuccess?: (user: any) => void;
 }
 
-export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({ onClose, onSuccess }: AuthModalProps) 
+{
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { setUser } = useUser();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => 
+  {
     setError('');
-
-    if (!email || !password) {
+    // Validation
+    if (!email || !password) 
+    {
       setError('Please fill in both fields');
       return;
     }
@@ -26,11 +30,17 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     const action = mode === 'login' ? loginUser : signUpUser;
     const { user, error: err } = await action(email, password);
 
-    if (err || !user) {
+    if (err || !user) 
+    {
       setError(err || 'Something went wrong');
-    } else {
+    } 
+    else 
+    {
       setUser(user);
-      if (onSuccess) onSuccess(user);
+      if (onSuccess)
+        {
+          onSuccess(user);
+        } 
       onClose();
     }
   };

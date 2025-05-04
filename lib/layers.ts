@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 
-export async function saveLayersForImage(imageId: string, layers: any[]) {
+export async function saveLayersForImage(imageId: string, layers: any[]) 
+{
   // Clean old layers
   const { error: deleteError } = await supabase
     .from('layers')
@@ -12,7 +13,8 @@ export async function saveLayersForImage(imageId: string, layers: any[]) {
   }
 
   // Prepare new layers to insert
-  const layerInsert = layers.map((layer) => ({
+  const layerInsert = layers.map((layer) => (
+  {
     image_id: imageId,
     type: layer.type,
     colour: layer.colour,
@@ -23,7 +25,8 @@ export async function saveLayersForImage(imageId: string, layers: any[]) {
     .from('layers')
     .insert(layerInsert);
 
-  if (insertError) {
+  if (insertError) 
+  {
     return { error: insertError.message };
   }
 

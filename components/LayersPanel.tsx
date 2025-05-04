@@ -7,6 +7,7 @@ interface LayersPanelProps {
   setLayers: (updated: LayerType[]) => void;
 }
 
+// Small visual preview for each layer type 
 const Preview = ({ layer }: { layer: LayerType }) => {
   const size = 32;
   const style = {
@@ -19,7 +20,6 @@ const Preview = ({ layer }: { layer: LayerType }) => {
   };
 
   const renderShape = () => {
-    const [x, y, w, h] = layer.points;
     const svgProps = {
       stroke: layer.colour,
       strokeWidth: 2,
@@ -44,12 +44,11 @@ const Preview = ({ layer }: { layer: LayerType }) => {
         );
       case 'pen':
         return (
-        <>
-          <line x1={4} y1={28} x2={28} y2={4} {...svgProps} />
-          <polygon points="24,4 28,4 28,8" fill={layer.colour} stroke="none" />
-        </>
+          <>
+            <line x1={4} y1={28} x2={28} y2={4} {...svgProps} />
+            <polygon points="24,4 28,4 28,8" fill={layer.colour} stroke="none" />
+          </>
         );
-        
       default:
         return null;
     }
@@ -66,9 +65,9 @@ export default function LayersPanel({ layers, setLayers }: LayersPanelProps) {
   const { selectedId, setSelectedId, setActiveTool } = useAnnotation();
 
   const handleDelete = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation();
-    setLayers(layers.filter((l) => l.id !== id));
-    if (selectedId === id) setSelectedId(null);
+    e.stopPropagation(); // Prevents parent onClick when deleting
+    setLayers(layers.filter((l) => l.id !== id)); // Remove layer from state
+    if (selectedId === id) setSelectedId(null); // Clear selection if it's the deleted one
   };
 
   return (
@@ -89,8 +88,8 @@ export default function LayersPanel({ layers, setLayers }: LayersPanelProps) {
               : styles.layerItem
           }
           onClick={() => {
-            setActiveTool('select');
-            setSelectedId(layer.id);
+            setActiveTool('select'); // Activates selection tool when a layer is clicked
+            setSelectedId(layer.id); // Sets current selected layer
           }}
         >
           <Preview layer={layer} />

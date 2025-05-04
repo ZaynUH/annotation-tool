@@ -8,6 +8,7 @@ import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
 import styles from '../styles/UploadPage.module.css';
 
+// Deck Structure
 interface Deck 
 {
   id?: string;
@@ -15,6 +16,7 @@ interface Deck
   images: string[];
 }
 
+// Constructors Methods
 export default function UploadPage() 
 {
   const [deckName, setDeckName] = useState('');
@@ -123,7 +125,7 @@ export default function UploadPage()
     router.push('/annotate');
   };
   
-
+  // Webpage Front End
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -154,7 +156,6 @@ export default function UploadPage()
             title={user ? `Logged in as ${user.email}` : 'Click to log in'} // When hovering PC shows one of two messages dependant on logged in or not
           />
         </div>
-        
         
         <Navbar 
           disableTabs={{ annotate: true, export: true }} // Disallows you to naviagate without having a deck chosen
@@ -188,16 +189,16 @@ export default function UploadPage()
               <div key={index} className={styles.deck}>
                 <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div
-                  className={styles.deckRow}
+                  className={styles.deckRow} 
                   onClick={() => 
                   {
-                    localStorage.setItem('currentDeck', JSON.stringify(deck));
+                    localStorage.setItem('currentDeck', JSON.stringify(deck)); // CLicking a deck will allow you to annotate them in the annotate tab
                     router.push('/annotate');
                   }}
                 >
-                  {deck.images.slice(0, 4).map((img, idx) => 
+                  {deck.images.slice(0, 4).map((img, index) =>  // Preview of images in that deck
                   (
-                    <div key={idx} className={styles.deckImg}>
+                    <div key={index} className={styles.deckImg}>
                       <img src={img} className={styles.gridImage} />
                     </div>
                   ))}
@@ -206,7 +207,9 @@ export default function UploadPage()
                 (
                   <button
                     className={styles.removeButton}
-                    onClick={async () => {
+                    onClick={async () => 
+                    {
+                      // Deck Deletion Removes from database and webpage
                       const confirmDelete = window.confirm(`Delete deck "${deck.name}"?`);
                       if (!confirmDelete) return;
 

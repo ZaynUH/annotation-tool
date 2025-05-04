@@ -18,10 +18,9 @@ export default function ImagePanel({ images, currentIndex, onPrev, onNext }: Ima
 
   return (
     <div className={styles.imagePanelContainer}>
-      {/* Image count and arrows above */}
       <div className={styles.imageControls}>
         <button onClick={onPrev} disabled={!hasPrev} className={styles.controlArrow}>
-          &lt;
+          &lt; 
         </button>
         <span className={styles.imageCount}>
           {currentIndex + 1} / {images.length}
@@ -31,19 +30,15 @@ export default function ImagePanel({ images, currentIndex, onPrev, onNext }: Ima
         </button>
       </div>
 
-      {/* Image layout row */}
       <div className={styles.imageRow}>
-        {/* Left thumbnail (only if previous image exists) */}
         <div className={styles.imageBoxSmall}>
           {hasPrev ? <img src={images[currentIndex - 1]} alt="Previous" /> : null}
         </div>
 
-        {/* Main image */}
         <div className={styles.imageBoxLarge}>
           {imageUrl && <CanvasAnnotator imageUrl={imageUrl} width={450} height={600} />}
         </div>
 
-        {/* Right thumbnail (only if next image exists) */}
         <div className={styles.imageBoxSmall}>
           {hasNext ? <img src={images[currentIndex + 1]} alt="Next" /> : null}
         </div>

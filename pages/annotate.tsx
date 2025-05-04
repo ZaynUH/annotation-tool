@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Toolbar from '../components/Navbar';
+import Navbar from '../components/Navbar';
 import ToolsPanel from '../components/ToolsPanel';
 import ImagePanel from '../components/ImagePanel';
 import LayersPanel from '../components/LayersPanel';
@@ -9,8 +9,11 @@ import { supabase } from '../lib/supabase';
 import { saveLayersForImage } from '../lib/layers';
 import styles from '../styles/AnnotatePage.module.css';
 
-export default function AnnotatePage() {
-  const {
+export default function AnnotatePage() 
+{
+  const 
+  {
+    // Constructors and Methods Passed from Context For annotating
     images,
     setImages,
     currentIndex,
@@ -29,27 +32,34 @@ export default function AnnotatePage() {
     canRedo,
   } = useAnnotation();
 
+  // Constructors and Methods
   const { user } = useUser();
   const deckNameRef = useRef<string | null>(null);
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
   // Load deck and images
-  useEffect(() => {
+  useEffect(() => 
+  {
     const storedDeck = localStorage.getItem('currentDeck');
-    if (storedDeck) {
+    if (storedDeck) 
+    {
+      // Store Deck info
       const parsed = JSON.parse(storedDeck);
       currentDeck.current = parsed;
       deckNameRef.current = parsed.name;
 
-      if (parsed.images?.length) {
+      if (parsed.images?.length) 
+      {
         setImages(parsed.images);
         setCurrentIndex(0);
 
-        // For guests, load layers from localStorage
-        if (!user) {
+        // For guests load layers from LocalStorage
+        if (!user) 
+        {
           const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
-          if (savedLayers) {
+          if (savedLayers) 
+          {
             setLayers(JSON.parse(savedLayers));
           }
         }
@@ -57,16 +67,21 @@ export default function AnnotatePage() {
     }
   }, [user]);
 
-  // For guests: persist changes to localStorage
-  useEffect(() => {
-    if (deckNameRef.current && !user) {
+  // For guests persist changes to LocalStorage for when switching to export tab and back
+  useEffect(() => 
+  {
+    if (deckNameRef.current && !user) 
+    {
       localStorage.setItem(`layers_${deckNameRef.current}`, JSON.stringify(layers));
     }
   }, [layers, user]);
 
   // Load layers for the current image from the database
-  useEffect(() => {
-    const loadFromDB = async () => {
+  useEffect(() => 
+  {
+    const loadFromDB = async () => 
+    {
+      // Cannot access database storage if not logged in
       if (!user || !currentDeck.current) return;
 
       const imageUrl = images[currentIndex];
@@ -74,6 +89,7 @@ export default function AnnotatePage() {
 
       const imagePath = imageUrl.split('/').pop(); // extract just the filename
 
+      // Get Current saved Deck and Image data
       const { data: imageData, error: fetchError } = await supabase
         .from('images')
         .select('id')
@@ -81,29 +97,35 @@ export default function AnnotatePage() {
         .eq('image_url', imagePath)
         .single();
 
-      if (fetchError || !imageData) {
+      if (fetchError || !imageData) 
+      {
         console.warn('Image not found in DB:', fetchError);
         return;
       }
 
+      // Get Current saved Layer data
       const { data: layerData, error: layerError } = await supabase
         .from('layers')
         .select('*')
         .eq('image_id', imageData.id);
 
-      if (layerError) {
+      if (layerError) 
+      {
         console.warn('Could not fetch layers:', layerError);
         return;
       }
 
-      const parsedLayers = layerData.map((layer) => ({
+      // Note: I seen somewhere where using }; will ensure no type erorrs will occur just in case
+      const parsedLayers = layerData.map((layer) => (
+      {
         id: Date.now() + Math.random(), // Ensure unique id
         type: layer.type,
         colour: layer.colour,
         points: layer.points,
       }));
 
-      setLayers((prev) => ({
+      setLayers((prev) => (
+      {
         ...prev,
         [currentIndex]: parsedLayers,
       }));
@@ -114,24 +136,31 @@ export default function AnnotatePage() {
     loadFromDB();
   }, [user, currentIndex, images]);
 
-  const handlePrev = () => {
+  // Image Counter
+  const handlePrev = () => 
+  {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
-  const handleNext = () => {
+  const handleNext = () => 
+  {
     if (currentIndex < images.length - 1) setCurrentIndex(currentIndex + 1);
   };
 
+  // Layers Output
   const currentLayers = layers[currentIndex] || [];
 
-  const updateLayers = (updated: any[]) => {
-    setLayers((prev) => ({
+  const updateLayers = (updated: any[]) => 
+  {
+    setLayers((prev) => (
+    {
       ...prev,
       [currentIndex]: updated,
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async () => 
+  {
     if (!user || !currentDeck.current) return;
 
     const imageUrl = images[currentIndex];
@@ -144,15 +173,19 @@ export default function AnnotatePage() {
       .eq('image_url', imagePath)
       .single();
 
-    if (fetchError || !imageData) {
+    if (fetchError || !imageData) 
+    {
       alert('Could not find image in database.');
       return;
     }
 
     const { error: saveError } = await saveLayersForImage(imageData.id, currentLayers);
-    if (saveError) {
+    if (saveError) 
+    {
       alert('Failed to save annotations.');
-    } else {
+    } 
+    else 
+    {
       alert('Annotations saved successfully!');
     }
   };
@@ -162,7 +195,7 @@ export default function AnnotatePage() {
       <div className={styles.card}>
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <div className={styles.toolbarStrip}>
-          <Toolbar />
+          <Navbar/>
         </div>
         <ToolsPanel
           selectedTool={activeTool}

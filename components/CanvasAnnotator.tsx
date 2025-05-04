@@ -1,11 +1,14 @@
-import React, {
+import React, 
+{
   forwardRef,
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
 } from 'react';
-import {
+
+import 
+{
   Stage,
   Layer as KonvaLayer,
   Image as KonvaImage,
@@ -16,12 +19,14 @@ import {
   Transformer,
   Text,
 } from 'react-konva';
+
 import useImage from 'use-image';
 import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
 import TextEditor from './TextEditor';
 
-interface CanvasAnnotatorProps {
+interface CanvasAnnotatorProps 
+{
   imageUrl: string;
   width?: number;
   height?: number;
@@ -31,6 +36,7 @@ interface CanvasAnnotatorProps {
 
 const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
   ({ imageUrl, width = 450, height = 600, previewOnly = false, layers: previewLayers = [] }, ref) => {
+    
     const {
       currentIndex,
       layers,
@@ -46,9 +52,9 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
-    const isCtrlPressedRef = useRef(false);
+    const isCtrlPressedRef = useRef(false); 
 
-    const [bgImage] = useImage(imageUrl);
+    const [bgImage] = useImage(imageUrl); // Loads the base image
     const [isDrawing, setIsDrawing] = useState(false);
     const [draftLayer, setDraftLayer] = useState<Layer | null>(null);
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
@@ -57,33 +63,48 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
-    useImperativeHandle(ref, () => ({
-      getStage: () => stageRef.current,
+    useImperativeHandle(ref, () => (
+    {
+      getStage: () => stageRef.current, // Allows parent to access canvas
     }));
 
-    useEffect(() => {
-      const handleKey = (e: KeyboardEvent) => {
-        if (e.key === 'Control') isCtrlPressedRef.current = e.type === 'keydown';
+    useEffect(() => 
+    {
+      // Tracks Control key for multi-select (optional)
+      const handleKey = (e: KeyboardEvent) => 
+      {
+        if (e.key === 'Control')
+          { 
+            isCtrlPressedRef.current = e.type === 'keydown';
+          }
       };
       window.addEventListener('keydown', handleKey);
       window.addEventListener('keyup', handleKey);
-      return () => {
+      return () => 
+      {
         window.removeEventListener('keydown', handleKey);
         window.removeEventListener('keyup', handleKey);
       };
     }, []);
 
-    useEffect(() => {
-      // Sync selectedId with Transformer
-      if (selectedId !== null) {
+    useEffect(() => 
+    {
+      // Keep Transformer selection in sync
+      if (selectedId !== null) 
+      {
         setSelectedIds([selectedId]);
-      } else {
+      }
+      else 
+      {
         setSelectedIds([]);
       }
     }, [selectedId]);
 
-    useEffect(() => {
+    useEffect(() => 
+    {
+      // Attach Transformers to selected shapes
       if (!transformerRef.current || !stageRef.current) return;
+
       const nodes = selectedIds
         .map(id => stageRef.current.findOne(`#layer-${id}`))
         .filter(Boolean);
@@ -91,39 +112,57 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       transformerRef.current.getLayer()?.batchDraw();
     }, [selectedIds, currentLayers]);
 
-    const updateLayer = (newLayer: Layer) => {
+    const updateLayer = (newLayer: Layer) => 
+    {
+      // Save undo state and update current layers
       pushHistory(currentIndex, layers[currentIndex] || []);
-      setLayers(prev => {
+      setLayers(prev => 
+      {
         const next = [...(prev[currentIndex] || []), newLayer];
         return { ...prev, [currentIndex]: next };
       });
     };
 
-    const handleSelect = (e: any) => {
+    const handleSelect = (e: any) => 
+    {
+      // Annotation selection logic
       if (previewOnly || activeTool !== 'select') return;
+
       const idStr = e.target.id();
       const isMeta = e.evt.ctrlKey || e.evt.metaKey;
-      if (idStr?.startsWith('layer-')) {
+
+      if (idStr?.startsWith('layer-')) 
+      {
         const id = Number(idStr.replace('layer-', ''));
         setSelectedId(id);
         setSelectedIds(isMeta ? [...selectedIds, id] : [id]);
-      } else {
+      } 
+      else 
+      {
         setSelectedIds([]);
         setSelectedId(null);
       }
     };
 
-    const startDrawing = (e: any) => {
+    const startDrawing = (e: any) => 
+    {
+      // Handle mouse down for drawing
       if (previewOnly || activeTool === 'select') return;
+
       const pos = e.target.getStage().getPointerPosition();
       if (!pos) return;
+
       setStartPoint(pos);
       const id = Date.now();
       const base = { id, type: activeTool as Layer['type'], colour: activeColour };
-      if (activeTool === 'pen') {
+      
+      if (activeTool === 'pen') 
+      {
         setIsDrawing(true);
         updateLayer({ ...base, points: [pos.x, pos.y] });
-      } else if (activeTool === 'text') {
+      } 
+      else if (activeTool === 'text') 
+      {
         const newLayer: Layer = {
           ...base,
           id,
@@ -133,34 +172,50 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
         };
         updateLayer(newLayer);
         setEditingTextId(id);
-      } else {
+      } 
+      else
+      {
         setDraftLayer({ ...base, points: [] });
       }
     };
 
-    const draw = (e: any) => {
+    const draw = (e: any) => 
+    {
+      // Handle mouse move for drawing
       if (!startPoint) return;
+
       const pos = e.target.getStage().getPointerPosition();
       if (!pos) return;
-      if (activeTool === 'pen' && isDrawing) {
-        setLayers(prev => {
+
+      if (activeTool === 'pen' && isDrawing) 
+      {
+        setLayers(prev => 
+        {
           const updated = [...(prev[currentIndex] || [])];
           const last = updated[updated.length - 1];
           last.points.push(pos.x, pos.y);
           updated[updated.length - 1] = last;
+
           return { ...prev, [currentIndex]: updated };
         });
-      } else {
+      } 
+      else 
+      {
         let points: number[] = [];
-        if (activeTool === 'line' || activeTool === 'arrow') {
+        if (activeTool === 'line' || activeTool === 'arrow') 
+        {
           points = [startPoint.x, startPoint.y, pos.x, pos.y];
-        } else if (activeTool === 'rectangle') {
+        } 
+        else if (activeTool === 'rectangle') 
+        {
           const x = Math.min(startPoint.x, pos.x);
           const y = Math.min(startPoint.y, pos.y);
           const w = Math.abs(pos.x - startPoint.x);
           const h = Math.abs(pos.y - startPoint.y);
           points = [x, y, w, h];
-        } else if (activeTool === 'circle' || activeTool === 'ellipse') {
+        } 
+        else if (activeTool === 'circle' || activeTool === 'ellipse') 
+        {
           const rx = Math.abs(pos.x - startPoint.x);
           const ry = Math.abs(pos.y - startPoint.y);
           points = [startPoint.x, startPoint.y, rx, ry];
@@ -169,8 +224,11 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       }
     };
 
-    const endDrawing = () => {
-      if (draftLayer) {
+    const endDrawing = () => 
+    {
+      // Finalize shape after drawing
+      if (draftLayer) 
+      {
         updateLayer({ ...draftLayer, id: Date.now() });
         setDraftLayer(null);
       }
@@ -189,11 +247,15 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           onMouseUp={endDrawing}
           onClick={handleSelect}
         >
+          
           <KonvaLayer>
-            {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />}
+            {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />} 
 
-            {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => {
-              const common = {
+            {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => 
+            {
+              // Annotation State
+              const common = 
+              {
                 key: layer.id,
                 id: `layer-${layer.id}`,
                 stroke: layer.colour,
@@ -202,8 +264,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 onClick: handleSelect,
                 onTap: handleSelect,
               };
-
-              if (layer.type === 'text') {
+              if (layer.type === 'text') 
+              {
                 const [x, y] = layer.points;
                 return (
                   <Text
@@ -212,7 +274,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                     y={y}
                     text={layer.text || ''}
                     fontSize={layer.fontSize || 18}
-                    onDblClick={() => {
+                    onDblClick={() => 
+                    {
                       if (activeTool === 'select') {
                         setEditingTextId(layer.id);
                       }
@@ -221,7 +284,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 );
               }
 
-              switch (layer.type) {
+              switch (layer.type) 
+              {
                 case 'pen':
                   return <Line {...common} points={layer.points} lineCap="round" />;
                 case 'line':
@@ -243,18 +307,25 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           </KonvaLayer>
         </Stage>
 
-        {editingTextId !== null && (() => {
+        {editingTextId !== null && (() => 
+        {
+          // TextEditor overlay
           const textLayer = currentLayers.find(l => l.id === editingTextId);
           const node = stageRef.current?.findOne(`#layer-${editingTextId}`);
+
           if (!textLayer || !node || !(node instanceof Konva.Text)) return null;
+
           return (
             <TextEditor
               textNode={node}
-              onChange={(newText: string) => {
-                setLayers(prev => {
+              onChange={(newText: string) => 
+              {
+                setLayers(prev => 
+                {
                   const updated = [...(prev[currentIndex] || [])];
                   const idx = updated.findIndex(l => l.id === editingTextId);
                   if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+                  
                   return { ...prev, [currentIndex]: updated };
                 });
               }}

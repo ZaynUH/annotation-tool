@@ -122,6 +122,20 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       });
     };
 
+    const updateLayerPosition = (id: number, newPoints: number[]) => 
+    {
+      setLayers(prev => 
+      {
+        const updated = [...(prev[currentIndex] || [])];
+        const index = updated.findIndex(l => l.id === id);
+        if (index !== -1) 
+        {
+          updated[index] = { ...updated[index], points: newPoints };
+        }
+        return { ...prev, [currentIndex]: updated };
+      });
+    };
+
     const handleSelect = (e: any) => 
     {
       // Annotation selection logic
@@ -262,6 +276,22 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 draggable: activeTool === 'select',
                 onClick: handleSelect,
                 onTap: handleSelect,
+                onDragEnd: (e: any) => 
+                {
+                  const node = e.target;
+                  if (layer.type === 'text') 
+                  {
+                    updateLayerPosition(layer.id, [node.x(), node.y()]);
+                  }
+                },
+                onTransformEnd: (e: any) => 
+                {
+                  const node = e.target;
+                  if (layer.type === 'text') 
+                  {
+                    updateLayerPosition(layer.id, [node.x(), node.y()]);
+                  }
+                }
               };
               if (layer.type === 'text') 
               {

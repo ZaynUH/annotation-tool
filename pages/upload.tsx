@@ -113,10 +113,6 @@ export default function UploadPage()
   
     // Set Local Storage for the current deck being annotated
     localStorage.setItem('currentDeck', JSON.stringify(deck));
-    
-    await new Promise(resolve => setTimeout(resolve, 1000)); // small delay
-    const { decks: updatedDecks } = await fetchDecksByUser(user.id);
-    setDecks(updatedDecks);
   
     // Reset Image Grid 
     setDeckName('');
@@ -155,11 +151,14 @@ export default function UploadPage()
                 setShowModal(true); // If not logged in show the Login Modal
               }
             }}
-            title={user ? `Logged in as ${user.email}` : 'Click to log in'}
+            title={user ? `Logged in as ${user.email}` : 'Click to log in'} // When hovering PC shows one of two messages dependant on logged in or not
           />
         </div>
-
-        <Navbar disableTabs={{ annotate: true, export: true }} />
+        
+        
+        <Navbar 
+          disableTabs={{ annotate: true, export: true }} // Disallows you to naviagate without having a deck chosen
+        />
 
         <div className={styles.importSection}>
           <input
@@ -190,18 +189,21 @@ export default function UploadPage()
                 <input className={styles.deckTitle} value={deck.name} readOnly />
                 <div
                   className={styles.deckRow}
-                  onClick={() => {
+                  onClick={() => 
+                  {
                     localStorage.setItem('currentDeck', JSON.stringify(deck));
                     router.push('/annotate');
                   }}
                 >
-                  {deck.images.slice(0, 4).map((img, idx) => (
+                  {deck.images.slice(0, 4).map((img, idx) => 
+                  (
                     <div key={idx} className={styles.deckImg}>
                       <img src={img} className={styles.gridImage} />
                     </div>
                   ))}
                 </div>
-                {user && deck.id && (
+                {user && deck.id && 
+                (
                   <button
                     className={styles.removeButton}
                     onClick={async () => {
@@ -224,7 +226,8 @@ export default function UploadPage()
         </div>
       </div>
 
-      {showModal && (
+      {showModal && 
+      (
         <AuthModal
           onClose={() => setShowModal(false)}
           onSuccess={() => setShowModal(false)}

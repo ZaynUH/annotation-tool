@@ -57,7 +57,7 @@ export default function UploadPage()
   };
 
   // When creating a new Deck
-  const handleAnnotate = async () => 
+  const HandleSaveDeck = async () => 
     {
       // Validate name and image files
       if (!deckName.trim() || imageFiles.length === 0) return;
@@ -185,7 +185,7 @@ export default function UploadPage()
               onRemove={handleRemove}
               onUploadSelect={handleImportSelect}
             />
-            <button className={styles.nextButton} onClick={handleAnnotate}>
+            <button className={styles.nextButton} onClick={HandleSaveDeck}>
               &gt;
             </button>
           </div>

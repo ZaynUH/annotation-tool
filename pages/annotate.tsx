@@ -8,6 +8,7 @@ import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
 import { saveLayersForImage } from '../lib/layers';
 import styles from '../styles/AnnotatePage.module.css';
+import { useRouter } from 'next/router';
 
 export default function AnnotatePage() 
 {
@@ -34,9 +35,12 @@ export default function AnnotatePage()
 
   // Constructors and Methods
   const { user } = useUser();
+  const router = useRouter();
   const deckNameRef = useRef<string | null>(null);
   const currentDeck = useRef<any>(null);
   const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
+  const [initialLayers, setInitialLayers] = useState<Record<number, any[]>>({});
+
 
   // Load deck and images
   useEffect(() => 
@@ -60,7 +64,9 @@ export default function AnnotatePage()
           const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
           if (savedLayers) 
           {
-            setLayers(JSON.parse(savedLayers));
+            const parsedLayers = JSON.parse(savedLayers);
+            setLayers(parsedLayers);
+            setInitialLayers(parsedLayers);
           }
         }
       }
@@ -130,6 +136,12 @@ export default function AnnotatePage()
         [currentIndex]: parsedLayers,
       }));
 
+      setInitialLayers((prev) => (
+      {
+        ...prev,
+        [currentIndex]: parsedLayers,
+      }));
+
       setLoadedImageIds((prev) => new Set(prev).add(imageUrl));
     };
 
@@ -187,7 +199,35 @@ export default function AnnotatePage()
     else 
     {
       alert('Annotations saved successfully!');
+      setInitialLayers((prev) => (
+      {
+        ...prev,
+        [currentIndex]: currentLayers,
+      }));
     }
+  };
+
+  // Handle save/discard prompt when navigating away
+  const handleTabSwitch = async () => 
+  {
+    const hasUnsavedChanges = JSON.stringify(initialLayers[currentIndex]) !== JSON.stringify(currentLayers);
+
+    if (hasUnsavedChanges) 
+    {
+      if (user) 
+      {
+        const confirmSave = confirm('You have unsaved changes. Do you want to save before leaving?');
+        if (confirmSave) await handleSave();
+      } 
+      else 
+      {
+        const confirmLeave = confirm('You are not logged in. Leaving this page will lose all unsaved annotations.\n\nAre you sure you want to leave?');
+        if (!confirmLeave) return;
+      }
+    }
+
+    // Navigate after handling
+    window.location.href = '/upload';
   };
 
   return (
@@ -195,7 +235,7 @@ export default function AnnotatePage()
       <div className={styles.card}>
         <h1 className={styles.title}>Image Annotation Tool</h1>
         <div className={styles.toolbarStrip}>
-          <Navbar/>
+          <Navbar onSwitchTab={handleTabSwitch}/> {/* Handles save/discard logic before navigating */}
         </div>
         <ToolsPanel
           selectedTool={activeTool}

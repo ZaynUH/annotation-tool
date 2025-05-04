@@ -58,72 +58,81 @@ export default function UploadPage()
 
   // When creating a new Deck
   const handleAnnotate = async () => 
-  {
-    // Image and deck name Validation
-    if (!deckName.trim() || imageFiles.length === 0) return;
-    const trimmedName = deckName.trim(); // Just removed whitespace from names for ease
-  
-    if (decks.some((d) => d.name === trimmedName)) 
     {
-      alert('You already have a deck with this name');
-      return;
-    }
+      // Validate name and image files
+      if (!deckName.trim() || imageFiles.length === 0) return;
+      const trimmedName = deckName.trim();
     
-    // Checks if the user is logged in
-    if (!user) 
-    {
-      // "Guests" can annotate, but their deck won't be saved in the database
-      const previewUrls = imageFiles.map((file) => URL.createObjectURL(file));
-      const guestDeck = { name: trimmedName, images: previewUrls };
+      // Prevent duplicates
+      if (decks.some((d) => d.name === trimmedName)) 
+      {
+        alert('You already have a deck with this name');
+        return;
+      }
     
-      localStorage.setItem('currentDeck', JSON.stringify(guestDeck)); // Decks will only save in local storage till the tab is closed
-      
-      // Resets Image Grid
+      // If guest (not logged in)
+      if (!user) 
+      {
+        const previewUrls = imageFiles.map((file) => URL.createObjectURL(file));
+        const guestDeck = { name: trimmedName, images: previewUrls };
+    
+        localStorage.setItem('currentDeck', JSON.stringify(guestDeck));
+    
+        // Reset UI state
+        setDeckName('');
+        setImageFiles([]);
+        setSelected(null);
+    
+        router.push('/annotate');
+        return;
+      }
+    
+      // Upload image files to Supabase storage
+      const uploadedPaths: string[] = [];
+    
+      for (const file of imageFiles) 
+      {
+        const filePath = `${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, file);
+    
+        if (uploadError) 
+        {
+          console.error('Upload failed:', uploadError.message);
+          continue;
+        }
+    
+        uploadedPaths.push(filePath);
+      }
+    
+      // Create deck in Supabase DB
+      const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
+      if (error || !deck) 
+      {
+        alert('Failed to save to database');
+        return;
+      }
+    
+      // Ensure deck uses full public image URLs like fetchDecksByUser does
+      const baseUrl = 'https://sflyeuxvdpndrwuofgqb.supabase.co/storage/v1/object/public/images';
+      const fullDeck = {
+        ...deck,
+        images: uploadedPaths.map((path) => `${baseUrl}/${path}`),
+      };
+    
+      // Save to localStorage for annotation page to use
+      localStorage.setItem('currentDeck', JSON.stringify(fullDeck));
+    
+      // Reset form
       setDeckName('');
       setImageFiles([]);
       setSelected(null);
     
+      // Navigate to Annotate
       router.push('/annotate');
-      return;
-    }
-  
-    // Each image is time stamped sent over to the database bucket for storage
-    const uploadedPaths: string[] = [];
-  
-    for (const file of imageFiles) 
-    {
-      const filePath = `${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, file);
-  
-      if (uploadError) {
-        console.error('Upload failed:', uploadError.message); // Print out Error message when failing to save
-        continue;
-      }
-  
-      uploadedPaths.push(filePath); // File name is saved
-    }
-  
-    // All the Deck data is sent to the database
-    const { deck, error } = await createDeckWithImages(trimmedName, user.id, uploadedPaths);
-    if (error || !deck) 
-    {
-      alert('Failed to save to database');
-      return;
-    }
-  
-    // Set Local Storage for the current deck being annotated
-    localStorage.setItem('currentDeck', JSON.stringify(deck));
-  
-    // Reset Image Grid 
-    setDeckName('');
-    setImageFiles([]);
-    setSelected(null);
-  
-    // Route to annotate page 
-    router.push('/annotate');
-  };
+    };
+    
   
   // Webpage Front End
   return (

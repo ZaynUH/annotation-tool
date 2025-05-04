@@ -20,6 +20,7 @@ import {
 import useImage from 'use-image';
 import Konva from 'konva';
 import { useAnnotation, Layer } from '../context/AnnotationContext';
+import TextEditor from './TextEditor';
 
 interface CanvasAnnotatorProps {
   imageUrl: string;
@@ -52,6 +53,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
     const [draftLayer, setDraftLayer] = useState<Layer | null>(null);
     const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [editingTextId, setEditingTextId] = useState<number | null>(null);
+    const [activeEditorNode, setActiveEditorNode] = useState<Konva.Text | null>(null);
 
     const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
 
@@ -122,10 +125,11 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
           ...base,
           id,
           points: [pos.x, pos.y],
-          text: 'Double-click to edit',
+          text: '',
           fontSize,
         };
         updateLayer(newLayer);
+        setEditingTextId(id);
       } else {
         setDraftLayer({ ...base, points: [] });
       }
@@ -171,10 +175,6 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       setStartPoint(null);
     };
 
-    const handleTextDblClick = (layer: Layer) => {
-      // Reserved for future logic if needed
-    };
-
     return (
       <div style={{ position: 'relative' }}>
         <Stage
@@ -195,7 +195,7 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
                 id: `layer-${layer.id}`,
                 stroke: layer.colour,
                 strokeWidth: layer.fontSize || 2,
-                draggable: activeTool === 'select',
+                draggable: activeTool === 'select' || layer.type === 'text',
                 onDragEnd: () => {},
                 onTransformEnd: () => {},
                 onClick: handleSelect,
@@ -204,6 +204,26 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
 
               if (layer.type === 'text') {
                 const [x, y] = layer.points;
+                const isEditing = editingTextId === layer.id;
+
+                return (
+                  <Text
+                    {...common}
+                    x={x}
+                    y={y}
+                    text={layer.text || ''}
+                    fontSize={layer.fontSize || 18}
+                    fill={layer.colour}
+                    width={200}
+                    visible={!isEditing}
+                    onDblClick={() => setEditingTextId(layer.id)}
+                    ref={(node) => {
+                      if (node && isEditing) {
+                        setTimeout(() => setActiveEditorNode(node));
+                      }
+                    }}
+                  />
+                );
               }
 
               switch (layer.type) {
@@ -227,6 +247,21 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
             <Transformer ref={transformerRef} />
           </KonvaLayer>
         </Stage>
+
+        {editingTextId !== null && activeEditorNode && (
+          <TextEditor
+            textNode={activeEditorNode}
+            onChange={(newText) => {
+              setLayers(prev => {
+                const updated = [...(prev[currentIndex] || [])];
+                const idx = updated.findIndex(l => l.id === editingTextId);
+                if (idx !== -1) updated[idx] = { ...updated[idx], text: newText };
+                return { ...prev, [currentIndex]: updated };
+              });
+            }}
+            onClose={() => setEditingTextId(null)}
+          />
+        )}
       </div>
     );
   }

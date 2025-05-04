@@ -134,20 +134,8 @@ const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
       if (idStr?.startsWith('layer-')) 
       {
         const id = Number(idStr.replace('layer-', ''));
-
-        setSelectedIds(prev => 
-        {
-          if (isMeta) 
-          {
-            return prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id];
-          } 
-          else 
-          {
-            return [id];
-          }
-        });
-
         setSelectedId(id);
+        setSelectedIds(isMeta ? [...selectedIds, id] : [id]);
       } 
       else 
       {

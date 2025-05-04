@@ -1,277 +1,339 @@
-import { useEffect, useRef, useState } from 'react';
-import Navbar from '../components/Navbar';
-import ToolsPanel from '../components/ToolsPanel';
-import ImagePanel from '../components/ImagePanel';
-import LayersPanel from '../components/LayersPanel';
-import { useAnnotation } from '../context/AnnotationContext';
-import { useUser } from '../context/UserContext';
-import { supabase } from '../lib/supabase';
-import { saveLayersForImage } from '../lib/layers';
-import styles from '../styles/AnnotatePage.module.css';
-import { useRouter } from 'next/router';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 
-export default function AnnotatePage() 
-{
-  const 
-  {
-    // Constructors and Methods Passed from Context For annotating
-    images,
-    setImages,
-    currentIndex,
-    setCurrentIndex,
-    layers,
-    setLayers,
-    activeTool,
-    setActiveTool,
-    activeColour,
-    setActiveColour,
-    fontSize,
-    setFontSize,
-    undo,
-    canUndo,
-    redo,  
-    canRedo,
-  } = useAnnotation();
+import {
+  Stage,
+  Layer as KonvaLayer,
+  Image as KonvaImage,
+  Line,
+  Arrow,
+  Rect,
+  Ellipse,
+  Transformer,
+  Text,
+} from 'react-konva';
 
-  // Constructors and Methods
-  const { user } = useUser();
-  const router = useRouter();
-  const deckNameRef = useRef<string | null>(null);
-  const currentDeck = useRef<any>(null);
-  const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
-  const [initialLayers, setInitialLayers] = useState<Record<number, any[]>>({});
+import useImage from 'use-image';
+import Konva from 'konva';
+import { useAnnotation, Layer } from '../context/AnnotationContext';
+import TextEditor from '../components/TextEditor';
 
+interface CanvasAnnotatorProps {
+  imageUrl: string;
+  width?: number;
+  height?: number;
+  previewOnly?: boolean;
+  layers?: Layer[];
+}
 
-  // Load deck and images
-  useEffect(() => 
-  {
-    const storedDeck = localStorage.getItem('currentDeck');
-    if (storedDeck) 
+const CanvasAnnotator = forwardRef<any, CanvasAnnotatorProps>(
+  ({ imageUrl, width = 450, height = 600, previewOnly = false, layers: previewLayers = [] }, ref) => {
+
+    const {
+      currentIndex,
+      layers,
+      setLayers,
+      activeTool,
+      setActiveTool,
+      selectedId,
+      setSelectedId,
+      activeColour,
+      fontSize,
+      pushHistory,
+    } = useAnnotation();
+
+    const stageRef = useRef<any>(null);
+    const transformerRef = useRef<any>(null);
+    const isCtrlPressedRef = useRef(false);
+
+    const [bgImage] = useImage(imageUrl); // Loads the base image
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [draftLayer, setDraftLayer] = useState<Layer | null>(null);
+    const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [editingTextId, setEditingTextId] = useState<number | null>(null);
+
+    const currentLayers = previewOnly ? previewLayers : layers[currentIndex] || [];
+
+    useImperativeHandle(ref, () => (
     {
-      // Store Deck info
-      const parsed = JSON.parse(storedDeck);
-      currentDeck.current = parsed;
-      deckNameRef.current = parsed.name;
+      getStage: () => stageRef.current, // Allows parent to access canvas
+    }));
 
-      if (parsed.images?.length) 
-      {
-        setImages(parsed.images);
-        setCurrentIndex(0);
-
-        // For guests load layers from LocalStorage
-        if (!user) 
-        {
-          const savedLayers = localStorage.getItem(`layers_${parsed.name}`);
-          if (savedLayers) 
-          {
-            const parsedLayers = JSON.parse(savedLayers);
-            setLayers(parsedLayers);
-            setInitialLayers(parsedLayers);
-          }
+    useEffect(() => {
+      // Tracks Control key for multi-select (optional)
+      const handleKey = (e: KeyboardEvent) => {
+        if (e.key === 'Control') {
+          isCtrlPressedRef.current = e.type === 'keydown';
         }
+      };
+      window.addEventListener('keydown', handleKey);
+      window.addEventListener('keyup', handleKey);
+      return () => {
+        window.removeEventListener('keydown', handleKey);
+        window.removeEventListener('keyup', handleKey);
+      };
+    }, []);
+
+    useEffect(() => {
+      // Keep Transformer selection in sync
+      if (selectedId !== null) {
+        setSelectedIds([selectedId]);
+      } else {
+        setSelectedIds([]);
       }
-    }
-  }, [user]);
+    }, [selectedId]);
 
-  // For guests persist changes to LocalStorage for when switching to export tab and back
-  useEffect(() => 
-  {
-    if (deckNameRef.current && !user) 
-    {
-      localStorage.setItem(`layers_${deckNameRef.current}`, JSON.stringify(layers));
-    }
-  }, [layers, user]);
+    useEffect(() => {
+      // Attach Transformers to selected shapes
+      if (!transformerRef.current || !stageRef.current) return;
 
-  // Load layers for the current image from the database
-  useEffect(() => 
-  {
-    const loadFromDB = async () => 
-    {
-      // Cannot access database storage if not logged in
-      if (!user || !currentDeck.current) return;
+      const nodes = selectedIds
+        .map(id => stageRef.current.findOne(`#layer-${id}`))
+        .filter(Boolean);
+      transformerRef.current.nodes(nodes);
+      transformerRef.current.getLayer()?.batchDraw();
+    }, [selectedIds, currentLayers]);
 
-      const imageUrl = images[currentIndex];
-      if (!imageUrl || loadedImageIds.has(imageUrl)) return;
+    useEffect(() => {
+      if (!transformerRef.current) return;
 
-      const imagePath = imageUrl.split('/').pop(); // extract just the filename
+      const transformer = transformerRef.current;
+      transformer.on('transformend dragend', () => {
+        const updatedLayers = [...currentLayers];
+        const changedIds = selectedIds;
 
-      // Get Current saved Deck and Image data
-      const { data: imageData, error: fetchError } = await supabase
-        .from('images')
-        .select('id')
-        .eq('deck_id', currentDeck.current.id)
-        .eq('image_url', imagePath)
-        .single();
+        changedIds.forEach((id) => {
+          const node = stageRef.current.findOne(`#layer-${id}`);
+          const index = updatedLayers.findIndex(l => l.id === id);
+          if (!node || index === -1) return;
 
-      if (fetchError || !imageData) 
-      {
-        console.warn('Image not found in DB:', fetchError);
-        return;
-      }
+          const layer = updatedLayers[index];
 
-      // Get Current saved Layer data
-      const { data: layerData, error: layerError } = await supabase
-        .from('layers')
-        .select('*')
-        .eq('image_id', imageData.id);
+          if ('x' in node && 'y' in node) {
+            const pos = node.position();
+            if (layer.type === 'text') {
+              layer.points = [pos.x, pos.y];
+            } else if ('width' in node && 'height' in node) {
+              const scaleX = node.scaleX();
+              const scaleY = node.scaleY();
+              const width = node.width() * scaleX;
+              const height = node.height() * scaleY;
 
-      if (layerError) 
-      {
-        console.warn('Could not fetch layers:', layerError);
-        return;
-      }
+              node.scaleX(1);
+              node.scaleY(1);
 
-      // Note: I seen somewhere where using }; will ensure no type erorrs will occur just in case
-      const parsedLayers = layerData.map((layer) => (
-      {
-        id: Date.now() + Math.random(), // Ensure unique id
-        type: layer.type,
-        colour: layer.colour,
-        points: layer.points,
-      }));
+              if (layer.type === 'rectangle') {
+                layer.points = [pos.x, pos.y, width, height];
+              } else if (layer.type === 'circle') {
+                layer.points = [pos.x, pos.y, width / 2];
+              } else if (layer.type === 'ellipse') {
+                layer.points = [pos.x, pos.y, width / 2, height / 2];
+              }
+            }
+          }
+        });
 
-      setLayers((prev) => (
-      {
-        ...prev,
-        [currentIndex]: parsedLayers,
-      }));
+        setLayers(prev => ({ ...prev, [currentIndex]: updatedLayers }));
+      });
+    }, [transformerRef, selectedIds, currentLayers]);
 
-      setInitialLayers((prev) => (
-      {
-        ...prev,
-        [currentIndex]: parsedLayers,
-      }));
-
-      setLoadedImageIds((prev) => new Set(prev).add(imageUrl));
+    const updateLayer = (newLayer: Layer) => {
+      // Save undo state and update current layers
+      pushHistory(currentIndex, layers[currentIndex] || []);
+      setLayers(prev => {
+        const next = [...(prev[currentIndex] || []), newLayer];
+        return { ...prev, [currentIndex]: next };
+      });
     };
 
-    loadFromDB();
-  }, [user, currentIndex, images]);
+    const handleSelect = (e: any) => {
+      // Annotation selection logic
+      if (previewOnly || activeTool !== 'select') return;
 
-  // Image Counter
-  const handlePrev = () => 
-  {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
-  };
+      const idStr = e.target.id();
+      const isMeta = e.evt.ctrlKey || e.evt.metaKey;
 
-  const handleNext = () => 
-  {
-    if (currentIndex < images.length - 1) setCurrentIndex(currentIndex + 1);
-  };
-
-  // Layers Output
-  const currentLayers = layers[currentIndex] || [];
-
-  const updateLayers = (updated: any[]) => 
-  {
-    setLayers((prev) => (
-    {
-      ...prev,
-      [currentIndex]: updated,
-    }));
-  };
-
-  const handleSave = async () => 
-  {
-    if (!user || !currentDeck.current) return;
-
-    const imageUrl = images[currentIndex];
-    const imagePath = imageUrl.split('/').pop();
-
-    const { data: imageData, error: fetchError } = await supabase
-      .from('images')
-      .select('id')
-      .eq('deck_id', currentDeck.current.id)
-      .eq('image_url', imagePath)
-      .single();
-
-    if (fetchError || !imageData) 
-    {
-      alert('Could not find image in database.');
-      return;
-    }
-
-    const { error: saveError } = await saveLayersForImage(imageData.id, currentLayers);
-    if (saveError) 
-    {
-      alert('Failed to save annotations.');
-    } 
-    else 
-    {
-      alert('Annotations saved successfully!');
-      setInitialLayers((prev) => (
-      {
-        ...prev,
-        [currentIndex]: currentLayers,
-      }));
-    }
-  };
-
-  // Handle save/discard prompt when navigating away
-  const handleTabSwitch = async (path: string) => 
-  {
-    // Only guard navigation when going to /upload
-    if (path === '/upload') 
-    {
-      const hasUnsavedChanges =
-        JSON.stringify(initialLayers[currentIndex]) !== JSON.stringify(currentLayers);
-  
-      if (hasUnsavedChanges) 
-      {
-        if (user) 
-        {
-          const confirmSave = confirm('You have unsaved changes. Do you want to save before leaving?');
-          if (confirmSave) await handleSave();
-        } 
-        else 
-        {
-          const confirmLeave = confirm(
-            'You are not logged in. Leaving this page will lose all unsaved annotations.\n\nAre you sure you want to leave?'
-          );
-          if (!confirmLeave) return;
-        }
+      if (idStr?.startsWith('layer-')) {
+        const id = Number(idStr.replace('layer-', ''));
+        setSelectedId(id);
+        setSelectedIds(isMeta ? [...new Set([...selectedIds, id])] : [id]);
+      } else {
+        setSelectedIds([]);
+        setSelectedId(null);
       }
-    }
-    // Navigate to destination
-    router.push(path);
-  };
-  
+    };
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Image Annotation Tool</h1>
-        <div className={styles.toolbarStrip}>
-          <Navbar onSwitchTab={handleTabSwitch}/> {/* Handles save/discard logic before navigating */}
-        </div>
-        <ToolsPanel
-          selectedTool={activeTool}
-          setSelectedTool={setActiveTool}
-          activeColour={activeColour}
-          setActiveColour={setActiveColour}
-          fontSize={fontSize}
-          setFontSize={setFontSize} 
-          onSave={handleSave}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo}
-          canRedo={canRedo}
-        />
+    const startDrawing = (e: any) => {
+      // Handle mouse down for drawing
+      if (previewOnly || activeTool === 'select') return;
 
-        <div className={styles.workspace}>
-          <ImagePanel
-            images={images}
-            currentIndex={currentIndex}
-            onPrev={handlePrev}
-            onNext={handleNext}
-            selectedTool={activeTool}
-          />
-          <LayersPanel
-            layers={currentLayers}
-            setLayers={updateLayers}
-          />
-        </div>
+      const pos = e.target.getStage().getPointerPosition();
+      if (!pos) return;
+
+      setStartPoint(pos);
+      const id = Date.now();
+      const base = { id, type: activeTool as Layer['type'], colour: activeColour };
+
+      if (activeTool === 'pen') {
+        setIsDrawing(true);
+        updateLayer({ ...base, points: [pos.x, pos.y] });
+      } else if (activeTool === 'text') {
+        const newLayer: Layer = {
+          ...base,
+          id,
+          points: [pos.x, pos.y],
+          text: '',
+          fontSize,
+        };
+        updateLayer(newLayer);
+        setEditingTextId(id);
+      } else {
+        setDraftLayer({ ...base, points: [] });
+      }
+    };
+
+    const draw = (e: any) => {
+      // Handle mouse move for drawing
+      if (!startPoint) return;
+
+      const pos = e.target.getStage().getPointerPosition();
+      if (!pos) return;
+
+      if (activeTool === 'pen' && isDrawing) {
+        setLayers(prev => {
+          const updated = [...(prev[currentIndex] || [])];
+          const last = updated[updated.length - 1];
+          last.points.push(pos.x, pos.y);
+          updated[updated.length - 1] = last;
+
+          return { ...prev, [currentIndex]: updated };
+        });
+      } else {
+        let points: number[] = [];
+        if (activeTool === 'line' || activeTool === 'arrow') {
+          points = [startPoint.x, startPoint.y, pos.x, pos.y];
+        } else if (activeTool === 'rectangle') {
+          const x = Math.min(startPoint.x, pos.x);
+          const y = Math.min(startPoint.y, pos.y);
+          const w = Math.abs(pos.x - startPoint.x);
+          const h = Math.abs(pos.y - startPoint.y);
+          points = [x, y, w, h];
+        } else if (activeTool === 'circle' || activeTool === 'ellipse') {
+          const rx = Math.abs(pos.x - startPoint.x);
+          const ry = Math.abs(pos.y - startPoint.y);
+          points = [startPoint.x, startPoint.y, rx, ry];
+        }
+        setDraftLayer({ id: -1, type: activeTool as Layer['type'], colour: activeColour, points });
+      }
+    };
+
+    const endDrawing = () => {
+      // Finalize shape after drawing
+      if (draftLayer) {
+        updateLayer({ ...draftLayer, id: Date.now() });
+        setDraftLayer(null);
+      }
+      setIsDrawing(false);
+      setStartPoint(null);
+    };
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <Stage
+          width={width}
+          height={height}
+          ref={stageRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={endDrawing}
+          onClick={handleSelect}
+        >
+          <KonvaLayer>
+            {bgImage && <KonvaImage image={bgImage} width={width} height={height} listening={false} />}
+
+            {[...currentLayers, ...(draftLayer ? [draftLayer] : [])].map(layer => {
+              const sW = layer.type === 'text' ? 2 : layer.fontSize || 2;
+              // Annotation State
+              const common = {
+                key: layer.id,
+                id: `layer-${layer.id}`,
+                stroke: layer.colour,
+                strokeWidth: sW,
+                draggable: activeTool === 'select',
+                onClick: handleSelect,
+                onTap: handleSelect,
+              };
+              if (layer.type === 'text') {
+                const [x, y] = layer.points;
+                return (
+                  <Text
+                    {...common}
+                    x={x}
+                    y={y}
+                    text={layer.text || ''}
+                    fontSize={layer.fontSize || 18}
+                    onDblClick={() => {
+                      if (activeTool === 'select') {
+                        setEditingTextId(layer.id);
+                      }
+                    }}
+                  />
+                );
+              }
+
+              switch (layer.type) {
+                case 'pen':
+                  return <Line {...common} points={layer.points} lineCap="round" />;
+                case 'line':
+                  return <Line {...common} points={layer.points} />;
+                case 'arrow':
+                  return <Arrow {...common} points={layer.points} fill={layer.colour} />;
+                case 'rectangle':
+                  return <Rect {...common} x={layer.points[0]} y={layer.points[1]} width={layer.points[2]} height={layer.points[3]} />;
+                case 'circle':
+                  return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[2]} />;
+                case 'ellipse':
+                  return <Ellipse {...common} x={layer.points[0]} y={layer.points[1]} radiusX={layer.points[2]} radiusY={layer.points[3]} />;
+                default:
+                  return null;
+              }
+            })}
+
+            <Transformer ref={transformerRef} />
+          </KonvaLayer>
+        </Stage>
+
+        {editingTextId !== null && (() => {
+          // TextEditor overlay
+          const textLayer = currentLayers.find(l => l.id === editingTextId);
+          const node = stageRef.current?.findOne(`#layer-${editingTextId}`);
+
+          if (!textLayer || !node || !(node instanceof Konva.Text)) return null;
+
+          return (
+            <TextEditor
+              textNode={node}
+              onChange={(newText: string) => {
+                setLayers(prev => {
+                  const updated = [...(prev[currentIndex] || [])];
+                  const index = updated.findIndex(l => l.id === editingTextId);
+                  if (index !== -1) updated[index] = { ...updated[index], text: newText };
+                  return { ...prev, [currentIndex]: updated };
+                });
+              }}
+              onClose={() => setEditingTextId(null)}
+            />
+          );
+        })()}
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
+
+export default CanvasAnnotator;

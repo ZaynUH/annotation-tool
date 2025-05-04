@@ -1,37 +1,30 @@
-import { Html } from 'react-konva-utils';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import Konva from 'konva';
 
-interface TextEditorProps {
+interface Props {
   textNode: Konva.Text;
   onChange: (newText: string) => void;
   onClose: () => void;
 }
 
-export default function TextEditor({ textNode, onChange, onClose }: TextEditorProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [hasMounted, setHasMounted] = useState(false);
-
-  // ✅ Ensure we wait for mount before rendering <Html>
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+const TextEditor = ({ textNode, onChange, onClose }: Props) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!hasMounted || !textareaRef.current || !textNode) return;
-
     const textarea = textareaRef.current;
     const stage = textNode.getStage();
-    if (!stage) return;
+    if (!textarea || !stage) return;
 
-    const { x, y } = textNode.absolutePosition();
-    const scale = textNode.getAbsoluteScale();
+    const textPosition = textNode.absolutePosition();
     const stageBox = stage.container().getBoundingClientRect();
+    const scale = textNode.getAbsoluteScale();
 
     textarea.value = textNode.text();
     textarea.style.position = 'absolute';
-    textarea.style.top = `${stageBox.top + y}px`;
-    textarea.style.left = `${stageBox.left + x}px`;
+    textarea.style.top = `${stageBox.top + textPosition.y}px`;
+    textarea.style.left = `${stageBox.left + textPosition.x}px`;
     textarea.style.fontSize = `${textNode.fontSize() * scale.x}px`;
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();
@@ -41,28 +34,27 @@ export default function TextEditor({ textNode, onChange, onClose }: TextEditorPr
     textarea.style.border = '1px dashed #999';
     textarea.style.padding = '0px';
     textarea.style.margin = '0px';
-    textarea.style.overflow = 'hidden';
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
+    textarea.style.zIndex = '1000';
 
     textarea.focus();
-
-    const commit = () => {
-      onChange(textarea.value);
-      onClose();
-    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        commit();
+        onChange(textarea.value);
+        onClose();
       } else if (e.key === 'Escape') {
         onClose();
       }
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (e.target !== textarea) commit();
+      if (e.target !== textarea) {
+        onChange(textarea.value);
+        onClose();
+      }
     };
 
     window.addEventListener('click', handleClickOutside);
@@ -72,14 +64,16 @@ export default function TextEditor({ textNode, onChange, onClose }: TextEditorPr
       window.removeEventListener('click', handleClickOutside);
       textarea.removeEventListener('keydown', handleKeyDown);
     };
-  }, [textNode, hasMounted]);
+  }, [textNode]);
 
-  // ✅ Delay rendering until after mount to avoid <FiberProvider /> error
-  if (!hasMounted) return null;
+  if (!containerRef.current) {
+    containerRef.current = document.body;
+  }
 
-  return (
-    <Html>
-      <textarea ref={textareaRef} />
-    </Html>
+  return ReactDOM.createPortal(
+    <textarea ref={textareaRef} />,
+    containerRef.current
   );
-}
+};
+
+export default TextEditor;

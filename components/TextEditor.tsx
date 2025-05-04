@@ -27,6 +27,8 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.fontSize = `${textNode.fontSize()}px`;
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();
+    const fill = textNode.fill();
+    textarea.style.color = typeof fill === 'string' ? fill : '#000';
     textarea.style.background = 'transparent';
     textarea.style.border = '1px dashed #999';
     textarea.style.padding = '0px';
@@ -34,8 +36,6 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
     textarea.style.zIndex = '1000';
-    const fill = textNode.fill();
-    textarea.style.color = typeof fill === 'string' ? fill : '#000';
 
     textarea.focus();
 

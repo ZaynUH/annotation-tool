@@ -57,7 +57,7 @@ export default function ToolsPanel({
             min={1}
             max={100}
             value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
+            
             className={styles.strokeInput}
             title="Stroke width or font size"
           />

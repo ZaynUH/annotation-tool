@@ -37,7 +37,6 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
     textarea.style.zIndex = '1000';
-    textarea.style.width = `${textNode.width() * scale.x}px`;
 
     textarea.focus();
 
@@ -63,13 +62,13 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
 
     textarea.addEventListener('keydown', handleKeyDown);
 
-    // ✅ Delay outside click binding to prevent instant close
-    const timer = setTimeout(() => {
+    // ✅ Delay click listener so the initial canvas click doesn't immediately close the textarea
+    const timeout = setTimeout(() => {
       window.addEventListener('click', handleClickOutside);
-    }, 0);
+    });
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timeout);
       window.removeEventListener('click', handleClickOutside);
       textarea.removeEventListener('keydown', handleKeyDown);
     };

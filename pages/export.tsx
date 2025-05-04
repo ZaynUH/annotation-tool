@@ -211,10 +211,9 @@ export default function ExportPage() {
             )}
           </div>
         </div>
-
         <div className={styles.section}>
           <input className={styles.deckInput} type="text" value="Export Preview" readOnly />
-          <div className={styles.deckRow}>
+          <div className={styles.deckRowPreview}>
             {selectedImages.map((img, idx) => (
               <canvas
                 key={idx}
@@ -224,8 +223,8 @@ export default function ExportPage() {
                     drawAnnotations(el, img);
                   }
                 }}
-                width={300}
-                height={400}
+                width={200}
+                height={300}
                 className={styles.exportCanvas}
               />
             ))}

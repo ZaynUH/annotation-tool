@@ -43,6 +43,7 @@
   color: black;
 }
 
+/* Scrollable deck layout */
 .decksGrid {
   display: flex;
   overflow-x: auto;
@@ -51,12 +52,12 @@
 }
 
 .deck {
+  min-width: 220px;
+  flex-shrink: 0;
   background-color: #e5e5e5;
   border: 1px solid #d1d1d1;
   border-radius: 6px;
   padding: 1rem;
-  min-width: 220px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
@@ -64,24 +65,24 @@
 .deckRow {
   display: flex;
   gap: 0.5rem;
+  overflow-x: auto;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   padding: 0.5rem;
-  overflow-x: auto;
   cursor: pointer;
 }
 
 .deckImg {
-  width: 120px;
-  height: 180px;
+  width: 200px;
+  height: 300px;
+  flex-shrink: 0;
   background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .gridImage {
@@ -94,24 +95,24 @@
   border: 2px solid #3b82f6;
 }
 
-.exportCanvas {
-  width: 120px;
-  height: 180px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #fff;
-  margin-right: 0.5rem;
-  flex-shrink: 0;
-}
-
+/* Export preview canvas row */
 .deckRowPreview {
   display: flex;
   overflow-x: auto;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: 1rem;
+  background-color: #fff;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.exportCanvas {
+  width: 200px;
+  height: 300px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   background-color: #fff;
+  flex-shrink: 0;
 }
 
 .exportButton {

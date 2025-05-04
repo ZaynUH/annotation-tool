@@ -74,7 +74,7 @@ export default function LayersPanel({ layers, setLayers }: LayersPanelProps) {
     <div className={styles.layers}>
       
       <div className={styles.layerHeader}>
-      <h2>Layers</h2>
+        <h2>Layers</h2>
       </div>
       {layers.length === 0 && <p style={{ color: '#000000' }}>No layers yet</p>}
       {layers.map((layer) => (

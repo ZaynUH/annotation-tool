@@ -113,6 +113,7 @@
   padding: 0.5rem 1rem;
   font-size: 1rem;
   cursor: pointer;
+  color: black;
 }
 
 .controlArrow:disabled {
@@ -123,6 +124,7 @@
 .imageCount {
   font-weight: 500;
   font-size: 1rem;
+  color: black;
 }
 
 .imageRow {
@@ -176,7 +178,7 @@
   display: flex;
   justify-content: space-around;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  color: black;
 }
 
 .layerItem {

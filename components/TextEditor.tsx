@@ -27,6 +27,8 @@ const TextEditor = ({ textNode, onChange, onClose }: Props) => {
     textarea.style.fontSize = `${textNode.fontSize()}px`;
     textarea.style.lineHeight = `${textNode.lineHeight()}`;
     textarea.style.fontFamily = textNode.fontFamily();
+    textarea.style.fontWeight = 'normal';
+    textarea.style.fontStyle = 'normal';  
     const fill = textNode.fill();
     textarea.style.color = typeof fill === 'string' ? fill : '#000';
     textarea.style.background = 'transparent';
